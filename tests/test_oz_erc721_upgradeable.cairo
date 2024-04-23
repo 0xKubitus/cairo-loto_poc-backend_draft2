@@ -1,21 +1,21 @@
 use openzeppelin::introspection::interface::ISRC5_ID;
-use openzeppelin::presets::ERC721Upgradeable::InternalImpl;
-use openzeppelin::presets::ERC721Upgradeable;
+use cairo_loto_poc::oz_erc721_upgradeable::ERC721UpgradeablePreset::InternalImpl;
+use cairo_loto_poc::oz_erc721_upgradeable::ERC721UpgradeablePreset;
 use openzeppelin::presets::interfaces::{
     ERC721UpgradeableABIDispatcher, ERC721UpgradeableABIDispatcherTrait
 };
-use openzeppelin::tests::access::test_ownable::assert_event_ownership_transferred;
-use openzeppelin::tests::mocks::account_mocks::{DualCaseAccountMock, CamelAccountMock};
-use openzeppelin::tests::mocks::erc721_mocks::SnakeERC721Mock;
-use openzeppelin::tests::mocks::erc721_receiver_mocks::{
+use cairo_loto_poc::testing_utils::access::test_ownable::assert_event_ownership_transferred;
+use cairo_loto_poc::testing_utils::mocks::account_mocks::{DualCaseAccountMock, CamelAccountMock};
+use cairo_loto_poc::testing_utils::mocks::erc721_mocks::SnakeERC721Mock;
+use cairo_loto_poc::testing_utils::mocks::erc721_receiver_mocks::{
     CamelERC721ReceiverMock, SnakeERC721ReceiverMock
 };
-use openzeppelin::tests::mocks::non_implementing_mock::NonImplementingMock;
-use openzeppelin::tests::token::test_erc721::{
+use cairo_loto_poc::testing_utils::mocks::non_implementing_mock::NonImplementingMock;
+use cairo_loto_poc::testing_utils::token::test_erc721::{
     assert_event_transfer, assert_only_event_transfer, assert_event_approval,
     assert_event_approval_for_all
 };
-use openzeppelin::tests::upgrades::test_upgradeable::assert_only_event_upgraded;
+use cairo_loto_poc::testing_utils::upgrades::test_upgradeable::assert_only_event_upgraded;
 use openzeppelin::tests::utils::constants::{
     ZERO, DATA, OWNER, SPENDER, RECIPIENT, OTHER, OPERATOR, CLASS_HASH_ZERO, PUBKEY, NAME, SYMBOL,
     BASE_URI
@@ -63,7 +63,7 @@ fn setup_dispatcher_with_event() -> ERC721UpgradeableABIDispatcher {
     calldata.append_serde(token_ids);
     calldata.append_serde(OWNER());
 
-    let address = utils::deploy(ERC721Upgradeable::TEST_CLASS_HASH, calldata);
+    let address = utils::deploy(ERC721UpgradeablePreset::TEST_CLASS_HASH, calldata);
     ERC721UpgradeableABIDispatcher { contract_address: address }
 }
 
@@ -98,7 +98,7 @@ fn setup_camel_account() -> ContractAddress {
 
 #[test]
 fn test__mint_assets() {
-    let mut state = ERC721Upgradeable::contract_state_for_testing();
+    let mut state = ERC721UpgradeablePreset::contract_state_for_testing();
     let mut token_ids = array![TOKEN_1, TOKEN_2, TOKEN_3].span();
 
     state._mint_assets(OWNER(), token_ids);
