@@ -9,7 +9,7 @@
 /// For more complex or custom contracts, use Wizard for Cairo
 /// https://wizard.openzeppelin.com/cairo
 #[starknet::contract]
-mod ERC721UpgradeablePreset {
+mod TicketsHandlerContract {
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::token::erc721::ERC721Component;

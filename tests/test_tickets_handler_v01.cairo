@@ -1,9 +1,7 @@
 use openzeppelin::introspection::interface::ISRC5_ID;
-use cairo_loto_poc::oz_erc721_upgradeable::ERC721UpgradeablePreset::InternalImpl;
-use cairo_loto_poc::oz_erc721_upgradeable::ERC721UpgradeablePreset;
-use openzeppelin::presets::interfaces::{
-    ERC721UpgradeableABIDispatcher, ERC721UpgradeableABIDispatcherTrait
-};
+use cairo_loto_poc::tickets_handler_v01::TicketsHandlerContract;
+use cairo_loto_poc::tickets_handler_v01::TicketsHandlerContract::InternalImpl;
+use cairo_loto_poc::interfaces::tickets_handler_v01::{TicketsHandlerABIDispatcher, TicketsHandlerABIDispatcherTrait,};
 use cairo_loto_poc::testing_utils::access::test_ownable::assert_event_ownership_transferred;
 use cairo_loto_poc::testing_utils::mocks::account_mocks::{DualCaseAccountMock, CamelAccountMock};
 use cairo_loto_poc::testing_utils::mocks::erc721_mocks::SnakeERC721Mock;
@@ -49,7 +47,7 @@ fn V2_CLASS_HASH() -> ClassHash {
 // Setup
 //
 
-fn setup_dispatcher_with_event() -> ERC721UpgradeableABIDispatcher {
+fn setup_dispatcher_with_event() -> TicketsHandlerABIDispatcher {
     let mut calldata = array![];
     let mut token_ids = array![TOKEN_1, TOKEN_2, TOKEN_3];
 
@@ -63,11 +61,11 @@ fn setup_dispatcher_with_event() -> ERC721UpgradeableABIDispatcher {
     calldata.append_serde(token_ids);
     calldata.append_serde(OWNER());
 
-    let address = utils::deploy(ERC721UpgradeablePreset::TEST_CLASS_HASH, calldata);
-    ERC721UpgradeableABIDispatcher { contract_address: address }
+    let address = utils::deploy(TicketsHandlerContract::TEST_CLASS_HASH, calldata);
+    TicketsHandlerABIDispatcher { contract_address: address }
 }
 
-fn setup_dispatcher() -> ERC721UpgradeableABIDispatcher {
+fn setup_dispatcher() -> TicketsHandlerABIDispatcher {
     let dispatcher = setup_dispatcher_with_event();
     // `OwnershipTransferred` + `Transfer`s
     utils::drop_events(dispatcher.contract_address, TOKENS_LEN.try_into().unwrap() + 1);
@@ -98,7 +96,7 @@ fn setup_camel_account() -> ContractAddress {
 
 #[test]
 fn test__mint_assets() {
-    let mut state = ERC721UpgradeablePreset::contract_state_for_testing();
+    let mut state = TicketsHandlerContract::contract_state_for_testing();
     let mut token_ids = array![TOKEN_1, TOKEN_2, TOKEN_3].span();
 
     state._mint_assets(OWNER(), token_ids);
@@ -1166,7 +1164,7 @@ fn test_state_persists_after_upgrade() {
 //
 
 fn assert_state_before_transfer(
-    dispatcher: ERC721UpgradeableABIDispatcher,
+    dispatcher: TicketsHandlerABIDispatcher,
     owner: ContractAddress,
     recipient: ContractAddress,
     token_id: u256
@@ -1177,7 +1175,7 @@ fn assert_state_before_transfer(
 }
 
 fn assert_state_after_transfer(
-    dispatcher: ERC721UpgradeableABIDispatcher,
+    dispatcher: TicketsHandlerABIDispatcher,
     owner: ContractAddress,
     recipient: ContractAddress,
     token_id: u256
@@ -1192,7 +1190,7 @@ fn assert_state_after_transfer(
 }
 
 fn assert_state_transfer_to_self(
-    dispatcher: ERC721UpgradeableABIDispatcher,
+    dispatcher: TicketsHandlerABIDispatcher,
     target: ContractAddress,
     token_id: u256,
     token_balance: u256
