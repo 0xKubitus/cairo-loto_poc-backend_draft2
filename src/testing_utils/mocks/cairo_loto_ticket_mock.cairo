@@ -3,26 +3,27 @@
 //
 #[starknet::contract]
 pub mod CairoLotoTicketMock {
-    use cairo_loto_poc::interfaces::cairo_loto_ticket::ICairoLotoTicket;
-    use cairo_loto_poc::components::cairo_loto_ticket::CairoLotoTicket;
-    use cairo_loto_poc::components::cairo_loto_ticket::CairoLotoTicket::TicketInternalTrait;
-    // use cairo_loto_poc::testing_utils::utils;
+    use cairo_loto_poc::components::cairo_loto_ticket::{CairoLotoTicketComponent, ICairoLotoTicket,};
+    use cairo_loto_poc::components::cairo_loto_ticket::CairoLotoTicketComponent::TicketInternalTrait;
+    // use cairo_loto_poc::testing_utils;
     use cairo_loto_poc::testing_utils::constants::{TEN_WITH_6_DECIMALS, fake_ERC20_asset,};
     use starknet::ContractAddress;use starknet::{contract_address_const,};
 
 
-    component!(path: CairoLotoTicket, storage: cairo_loto_ticket, event: TicketEvent);
+    component!(path: CairoLotoTicketComponent, storage: cairo_loto_ticket, event: TicketEvent);
 
 
+    // Implementing CairoLotoTicketComponent's external/public functions
     #[abi(embed_v0)]
-    impl CairoLotoTicketImpl = CairoLotoTicket::TicketExternals<ContractState>; // CairoLotoTicketComponent External/Public functions
-    impl TicketInternalImpl = CairoLotoTicket::TicketInternalImpl<ContractState>; // CairoLotoTicketComponent Internal/Private functions
+    impl CairoLotoTicketImpl = CairoLotoTicketComponent::TicketExternals<ContractState>; // CairoLotoTicketComponent External/Public functions
+    // Implementing CairoLotoTicketComponent's internal/private methods
+    impl TicketInternalImpl = CairoLotoTicketComponent::TicketInternalImpl<ContractState>; // CairoLotoTicketComponent Internal/Private functions
 
 
     #[storage]
     struct Storage {
         #[substorage(v0)]
-        cairo_loto_ticket: CairoLotoTicket::Storage,
+        cairo_loto_ticket: CairoLotoTicketComponent::Storage,
     }
 
 
@@ -30,7 +31,7 @@ pub mod CairoLotoTicketMock {
     #[derive(Drop, starknet::Event)]
     enum Event {
         #[flat]
-        TicketEvent: CairoLotoTicket::Event,
+        TicketEvent: CairoLotoTicketComponent::Event,
     }
 
 
@@ -45,11 +46,4 @@ pub mod CairoLotoTicketMock {
         self.cairo_loto_ticket.total_supply.write(3); // only needed for testing
     }
 
-
-    // CairoLotoTicketComponent External/Public functions
-    #[abi(embed_v0)]
-    impl CairoLotoTicketImpl = CairoLotoTicket::TicketExternals<ContractState>;
-
-    // CairoLotoTicketComponent Internal/Private functions
-    impl TicketInternalImpl = CairoLotoTicket::TicketInternalImpl<ContractState>;
 }

@@ -1,5 +1,6 @@
 mod account_mocks;
 
+mod cairo_loto_ticket_mock;
 mod erc721_mocks;
 mod erc721_receiver_mocks;
 
