@@ -28,5 +28,19 @@ fn test__free_mint() {
     testing::set_caller_address(OTHER());
 
     state._free_mint();
+    state._free_mint();
+    assert_eq!(state.erc721.balance_of(OTHER()), 2);
+}
+
+#[test]
+fn test__basic_burn() {
+    let mut state = TicketsHandlerContract::contract_state_for_testing();
+
+    testing::set_caller_address(OTHER());
+
+    state._free_mint();
     assert_eq!(state.erc721.balance_of(OTHER()), 1);
+
+    state._basic_burn(1);
+    assert_eq!(state.erc721.balance_of(OTHER()), 0);
 }

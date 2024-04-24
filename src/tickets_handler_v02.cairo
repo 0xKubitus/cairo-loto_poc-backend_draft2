@@ -143,5 +143,17 @@ mod TicketsHandlerContract {
             self.ticket._increase_circulating_supply();
             self.ticket._increase_total_tickets_emitted();
         }
+
+        /// Burns one ticket/token from the `caller` (no retrieval system).
+        fn _basic_burn(ref self: ContractState, token_id: u256) {
+            //? I think there is no need to make sure that `caller` is the ticket's owner
+            //? because this verification is made in the ERC721 component's function
+            //? that is called just below:
+            self.erc721._burn(token_id);
+
+            self.ticket._decrease_circulating_supply();
+        }
     }
+
+
 }
