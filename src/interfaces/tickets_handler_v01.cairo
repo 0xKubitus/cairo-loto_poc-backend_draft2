@@ -3,7 +3,7 @@ use starknet::{ContractAddress, ClassHash};
 
 #[starknet::interface]
 trait TicketsHandlerABI<TState> {
-// pub trait TicketsHandlerABI<TState> {
+    // pub trait TicketsHandlerABI<TState> {
     // IERC721
     fn balance_of(self: @TState, account: ContractAddress) -> u256;
     fn owner_of(self: @TState, token_id: u256) -> ContractAddress;

@@ -3,11 +3,14 @@
 //
 #[starknet::contract]
 pub mod CairoLotoTicketMock {
-    use cairo_loto_poc::components::cairo_loto_ticket::{CairoLotoTicketComponent, ICairoLotoTicket,};
+    use cairo_loto_poc::components::cairo_loto_ticket::{
+        CairoLotoTicketComponent, ICairoLotoTicket,
+    };
     use cairo_loto_poc::components::cairo_loto_ticket::CairoLotoTicketComponent::TicketInternalTrait;
     // use cairo_loto_poc::testing_utils;
     use cairo_loto_poc::testing_utils::constants::{TEN_WITH_6_DECIMALS, fake_ERC20_asset,};
-    use starknet::ContractAddress;use starknet::{contract_address_const,};
+    use starknet::ContractAddress;
+    use starknet::{contract_address_const,};
 
 
     component!(path: CairoLotoTicketComponent, storage: cairo_loto_ticket, event: TicketEvent);
@@ -15,9 +18,15 @@ pub mod CairoLotoTicketMock {
 
     // Implementing CairoLotoTicketComponent's external/public functions
     #[abi(embed_v0)]
-    impl CairoLotoTicketImpl = CairoLotoTicketComponent::TicketExternals<ContractState>; // CairoLotoTicketComponent External/Public functions
+    impl CairoLotoTicketImpl =
+        CairoLotoTicketComponent::TicketExternals<
+            ContractState
+        >; // CairoLotoTicketComponent External/Public functions
     // Implementing CairoLotoTicketComponent's internal/private methods
-    impl TicketInternalImpl = CairoLotoTicketComponent::TicketInternalImpl<ContractState>; // CairoLotoTicketComponent Internal/Private functions
+    impl TicketInternalImpl =
+        CairoLotoTicketComponent::TicketInternalImpl<
+            ContractState
+        >; // CairoLotoTicketComponent Internal/Private functions
 
 
     #[storage]
@@ -45,5 +54,4 @@ pub mod CairoLotoTicketMock {
         self.cairo_loto_ticket.current_supply.write(1); // only needed for testing
         self.cairo_loto_ticket.total_supply.write(3); // only needed for testing
     }
-
 }

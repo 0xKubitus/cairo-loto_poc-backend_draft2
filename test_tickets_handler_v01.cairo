@@ -1,7 +1,9 @@
 use openzeppelin::introspection::interface::ISRC5_ID;
 use cairo_loto_poc::tickets_handler_v01::TicketsHandlerContract;
 use cairo_loto_poc::tickets_handler_v01::TicketsHandlerContract::InternalImpl;
-use cairo_loto_poc::interfaces::tickets_handler_v01::{TicketsHandlerABIDispatcher, TicketsHandlerABIDispatcherTrait,};
+use cairo_loto_poc::interfaces::tickets_handler_v01::{
+    TicketsHandlerABIDispatcher, TicketsHandlerABIDispatcherTrait,
+};
 use cairo_loto_poc::testing_utils::access::test_ownable::assert_event_ownership_transferred;
 use cairo_loto_poc::testing_utils::mocks::account_mocks::{DualCaseAccountMock, CamelAccountMock};
 use cairo_loto_poc::testing_utils::mocks::erc721_mocks::SnakeERC721Mock;
@@ -1189,7 +1191,6 @@ fn total_tickets_emitted() {
     let loto_tickets = setup_dispatcher();
     assert_eq!(loto_tickets.total_tickets_emitted(), 3);
 }
-
 
 
 //

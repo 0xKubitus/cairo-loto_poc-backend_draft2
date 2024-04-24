@@ -9,31 +9,43 @@
 /// For more complex or custom contracts, use Wizard for Cairo
 /// https://wizard.openzeppelin.com/cairo
 #[starknet::contract]
-mod ERC721UpgradeablePreset {
+mod TicketsHandlerContract {
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::token::erc721::ERC721Component;
     use openzeppelin::upgrades::UpgradeableComponent;
     use openzeppelin::upgrades::interface::IUpgradeable;
+    use cairo_loto_poc::components::cairo_loto_ticket::{CairoLotoTicketComponent, ICairoLotoTicket};
+    use cairo_loto_poc::components::cairo_loto_ticket::CairoLotoTicketComponent::TicketInternalTrait;
     use starknet::{ContractAddress, ClassHash};
+    use starknet::{get_caller_address,};
+
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
+    component!(path: CairoLotoTicketComponent, storage: ticket, event: TicketEvent);
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
 
-    // Ownable Mixin
+    // Ownable Component
     #[abi(embed_v0)]
     impl OwnableMixinImpl = OwnableComponent::OwnableMixinImpl<ContractState>;
     impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
-    // ERC721 Mixin
+    // ERC721 Component
     #[abi(embed_v0)]
     impl ERC721MixinImpl = ERC721Component::ERC721MixinImpl<ContractState>;
     impl ERC721InternalImpl = ERC721Component::InternalImpl<ContractState>;
 
-    // Upgradeable
+    // Cairo Loto Ticket Component
+    #[abi(embed_v0)]
+    impl CairoLotoTicketImpl =
+        CairoLotoTicketComponent::TicketExternals<ContractState>;
+    impl TicketInternalImpl = CairoLotoTicketComponent::TicketInternalImpl<ContractState>;
+
+    // Upgradeable Component
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
+
 
     #[storage]
     struct Storage {
@@ -41,6 +53,8 @@ mod ERC721UpgradeablePreset {
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
         erc721: ERC721Component::Storage,
+        #[substorage(v0)]
+        ticket: CairoLotoTicketComponent::Storage,
         #[substorage(v0)]
         src5: SRC5Component::Storage,
         #[substorage(v0)]
@@ -55,15 +69,14 @@ mod ERC721UpgradeablePreset {
         #[flat]
         ERC721Event: ERC721Component::Event,
         #[flat]
+        TicketEvent: CairoLotoTicketComponent::Event,
+        #[flat]
         SRC5Event: SRC5Component::Event,
         #[flat]
-        UpgradeableEvent: UpgradeableComponent::Event
+        UpgradeableEvent: UpgradeableComponent::Event,
     }
 
-    /// Assigns `owner` as the contract owner.
-    /// Sets the token `name` and `symbol`.
-    /// Mints the `token_ids` tokens to `recipient` and sets
-    /// the base URI.
+
     #[constructor]
     fn constructor(
         ref self: ContractState,
@@ -72,13 +85,23 @@ mod ERC721UpgradeablePreset {
         base_uri: ByteArray,
         recipient: ContractAddress,
         token_ids: Span<u256>,
-        owner: ContractAddress
+        owner: ContractAddress,
+        underlying_erc20: ContractAddress,
+        ticket_value: u256,
     ) {
-        self.ownable.initializer(owner);
+        /// Sets the token `name` and `symbol` and sets the base URI.
         self.erc721.initializer(name, symbol, base_uri);
+        /// Sets the ticket `underlying_asset` and its `value`.
+        self.ticket.initializer(underlying_erc20, ticket_value);
+        /// Assigns `owner` as the contract owner.
+        self.ownable.initializer(owner);
+        /// Mints the `token_ids` tokens to `recipient`
         self._mint_assets(recipient, token_ids);
     }
 
+    //
+    // External/Public functions
+    //
     #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
         /// Upgrades the contract class hash to `new_class_hash`.
@@ -89,6 +112,9 @@ mod ERC721UpgradeablePreset {
         }
     }
 
+    //
+    // Internal/Private functions
+    //
     #[generate_trait]
     impl InternalImpl of InternalTrait {
         /// Mints `token_ids` to `recipient`.
@@ -100,9 +126,22 @@ mod ERC721UpgradeablePreset {
                     break;
                 }
                 let id = *token_ids.pop_front().unwrap();
-
                 self.erc721._mint(recipient, id);
+
+                self.ticket._increase_circulating_supply();
+                self.ticket._increase_total_tickets_emitted();
             }
+        }
+
+        /// Mints one ticket/token to the `caller` (for free).
+        fn _free_mint(ref self: ContractState,) {
+            let caller = get_caller_address();
+            let id = self.ticket.total_supply.read() + 1;
+
+            self.erc721._mint(caller, id);
+
+            self.ticket._increase_circulating_supply();
+            self.ticket._increase_total_tickets_emitted();
         }
     }
 }

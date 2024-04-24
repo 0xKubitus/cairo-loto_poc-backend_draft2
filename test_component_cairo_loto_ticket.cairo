@@ -2,7 +2,9 @@
 //! (This method does not seem to support testing of internal/public functions)
 
 use cairo_loto_poc::components::cairo_loto_ticket::CairoLotoTicketComponent::TicketInternalTrait;
-use cairo_loto_poc::components::cairo_loto_ticket::{ICairoLotoTicket, ICairoLotoTicketDispatcher, ICairoLotoTicketDispatcherTrait,};
+use cairo_loto_poc::components::cairo_loto_ticket::{
+    ICairoLotoTicket, ICairoLotoTicketDispatcher, ICairoLotoTicketDispatcherTrait,
+};
 use cairo_loto_poc::testing_utils::mocks::cairo_loto_ticket_mock::CairoLotoTicketMock;
 use cairo_loto_poc::testing_utils::constants::{
     TEN_WITH_6_DECIMALS, ETH_ADDRS, OWNER, fake_ERC20_asset,

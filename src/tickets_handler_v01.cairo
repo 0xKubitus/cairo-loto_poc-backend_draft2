@@ -37,7 +37,8 @@ mod TicketsHandlerContract {
 
     // Cairo Loto Ticket Component
     #[abi(embed_v0)]
-    impl CairoLotoTicketImpl = CairoLotoTicketComponent::TicketExternals<ContractState>;
+    impl CairoLotoTicketImpl =
+        CairoLotoTicketComponent::TicketExternals<ContractState>;
     impl TicketInternalImpl = CairoLotoTicketComponent::TicketInternalImpl<ContractState>;
 
     // Upgradeable Component

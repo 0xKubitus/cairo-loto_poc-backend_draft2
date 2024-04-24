@@ -13,9 +13,6 @@ use starknet::ContractAddress;
 // };
 // use openzeppelin::tests::utils::constants::{CLASS_HASH_ZERO, ZERO};
 
-
-
-
 //
 // Helpers
 //
@@ -30,8 +27,6 @@ fn assert_only_event_upgraded(contract: ContractAddress, class_hash: ClassHash) 
     assert_event_upgraded(contract, class_hash);
     utils::assert_no_events_left(ZERO());
 }
-
-
 // -----------------------------------------------------------------------------
 
 // //
@@ -109,3 +104,5 @@ fn assert_only_event_upgraded(contract: ContractAddress, class_hash: ClassHash) 
 //     // We use the v1 dispatcher because remove_selector is not in v2 interface
 //     v1.remove_selector();
 // }
+
+
