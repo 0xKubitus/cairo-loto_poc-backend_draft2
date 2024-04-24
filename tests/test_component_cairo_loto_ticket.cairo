@@ -21,7 +21,7 @@ fn setup_eth_ticket() -> ICairoLotoTicketDispatcher {
 
     testing::set_contract_address(OWNER());
     //? using `set_contract_address` in a test will indicate
-    //? to the test runnerat which address it must lookup for storage…
+    //? to the test runner at which address it must lookup for storage…
     // is this useful in this case, though?
 
     let address = testing_utils::deploy(CairoLotoTicketMock::TEST_CLASS_HASH, calldata);
@@ -45,7 +45,7 @@ fn fake_erc20_ticket_setup() -> ICairoLotoTicketDispatcher {
 // EXTERNAL/PUBLIC FUNCTIONS
 //
 #[test]
-fn test_constructor() {
+fn test_mock_constructor() {
     let ticket_component = fake_erc20_ticket_setup();
 
     assert_eq!(ticket_component.underlying_erc20_asset(), fake_ERC20_asset());

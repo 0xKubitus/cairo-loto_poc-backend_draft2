@@ -123,8 +123,10 @@ mod TicketsHandlerContract {
                     break;
                 }
                 let id = *token_ids.pop_front().unwrap();
-
                 self.erc721._mint(recipient, id);
+
+                self.ticket._increase_circulating_supply();
+                self.ticket._increase_total_tickets_emitted();
             }
         }
     }

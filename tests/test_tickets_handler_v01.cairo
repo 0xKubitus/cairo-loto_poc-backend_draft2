@@ -61,7 +61,7 @@ fn setup_dispatcher_with_event() -> TicketsHandlerABIDispatcher {
     calldata.append_serde(OWNER());
     calldata.append_serde(token_ids);
     calldata.append_serde(OWNER());
-    calldata.append_serde(fake_ERC20_asset());
+    calldata.append_serde(ETH_ADDRS());
     calldata.append_serde(TEN_WITH_6_DECIMALS);
 
     let address = utils::deploy(TicketsHandlerContract::TEST_CLASS_HASH, calldata);
@@ -94,7 +94,7 @@ fn setup_camel_account() -> ContractAddress {
 }
 
 //
-// _mint_assets
+// PRIVATE FUNCTIONS (ONLY FROM THIS CONTRACT, NOT ALL COMPONENTS INTERNALS)
 //
 
 #[test]
@@ -1161,6 +1161,36 @@ fn test_state_persists_after_upgrade() {
     let snake_balance = v2.balance_of(RECIPIENT());
     assert_eq!(snake_balance, camel_balance);
 }
+
+//
+// Test CairoLotoTicketComponent external functions (which are getters only)
+//
+
+#[test]
+fn test_underlying_erc20_asset() {
+    let loto_tickets = setup_dispatcher();
+    assert_eq!(loto_tickets.underlying_erc20_asset(), ETH_ADDRS());
+}
+
+#[test]
+fn ticket_value() {
+    let loto_tickets = setup_dispatcher();
+    assert_eq!(loto_tickets.ticket_value(), TEN_WITH_6_DECIMALS);
+}
+
+#[test]
+fn circulating_supply() {
+    let loto_tickets = setup_dispatcher();
+    assert_eq!(loto_tickets.circulating_supply(), 3);
+}
+
+#[test]
+fn total_tickets_emitted() {
+    let loto_tickets = setup_dispatcher();
+    assert_eq!(loto_tickets.total_tickets_emitted(), 3);
+}
+
+
 
 //
 // Helpers
