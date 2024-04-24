@@ -18,6 +18,7 @@ use openzeppelin::tests::utils::constants::{
     ZERO, DATA, OWNER, SPENDER, RECIPIENT, OTHER, OPERATOR, CLASS_HASH_ZERO, PUBKEY, NAME, SYMBOL,
     BASE_URI
 };
+use cairo_loto_poc::testing_utils::constants::{TEN_WITH_6_DECIMALS, fake_ERC20_asset, ETH_ADDRS,};
 use openzeppelin::tests::utils;
 use openzeppelin::token::erc721::ERC721Component::ERC721Impl;
 use openzeppelin::token::erc721::ERC721Component;
@@ -60,6 +61,8 @@ fn setup_dispatcher_with_event() -> TicketsHandlerABIDispatcher {
     calldata.append_serde(OWNER());
     calldata.append_serde(token_ids);
     calldata.append_serde(OWNER());
+    calldata.append_serde(fake_ERC20_asset());
+    calldata.append_serde(TEN_WITH_6_DECIMALS);
 
     let address = utils::deploy(TicketsHandlerContract::TEST_CLASS_HASH, calldata);
     TicketsHandlerABIDispatcher { contract_address: address }
