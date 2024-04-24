@@ -82,14 +82,17 @@ mod ERC721UpgradeablePreset {
         base_uri: ByteArray,
         recipient: ContractAddress,
         token_ids: Span<u256>,
-        owner: ContractAddress
+        owner: ContractAddress,
+        underlying_erc20: ContractAddress,
+        ticket_value: u256,
     ) {
-        /// Assigns `owner` as the contract owner.
-        /// Sets the token `name` and `symbol`.
-        /// Mints the `token_ids` tokens to `recipient` and sets
-        /// the base URI.
-        self.ownable.initializer(owner);
+        /// Sets the token `name` and `symbol` and sets the base URI.
         self.erc721.initializer(name, symbol, base_uri);
+        /// Sets the ticket `underlying_asset` and its `value`.
+        self.ticket.initializer(underlying_erc20, ticket_value);
+        /// Assigns `owner` as the contract owner.
+        self.ownable.initializer(owner);
+        /// Mints the `token_ids` tokens to `recipient`
         self._mint_assets(recipient, token_ids);
     }
 
