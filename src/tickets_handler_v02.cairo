@@ -10,6 +10,7 @@
 /// https://wizard.openzeppelin.com/cairo
 #[starknet::contract]
 mod TicketsHandlerContract {
+    use openzeppelin::access::ownable::ownable::OwnableComponent::InternalTrait;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::token::erc721::ERC721Component;
@@ -116,7 +117,7 @@ mod TicketsHandlerContract {
     // Internal/Private functions
     //
     #[generate_trait]
-    impl InternalImpl of InternalTrait {
+    impl PrivateImpl of PrivateTrait {
         /// Mints `token_ids` to `recipient`.
         fn _mint_assets(
             ref self: ContractState, recipient: ContractAddress, mut token_ids: Span<u256>
@@ -146,11 +147,11 @@ mod TicketsHandlerContract {
 
         /// Burns one ticket/token from the `caller` (no retrieval system).
         fn _basic_burn(ref self: ContractState, token_id: u256) {
-            //? I think there is no need to make sure that `caller` is the ticket's owner
-            //? because this verification is made in the ERC721 component's function
-            //? that is called just below:
+            // Ensure caller is the ticket's owner
+            let caller = get_caller_address();
+            assert_eq!(caller, self.erc721._owner_of(token_id));
+            // Burn ticket + decrease current supply
             self.erc721._burn(token_id);
-
             self.ticket._decrease_circulating_supply();
         }
     }

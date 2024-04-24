@@ -1,5 +1,5 @@
 use cairo_loto_poc::tickets_handler_v02::TicketsHandlerContract;
-use cairo_loto_poc::tickets_handler_v02::TicketsHandlerContract::InternalImpl;
+use cairo_loto_poc::tickets_handler_v02::TicketsHandlerContract::PrivateImpl;
 use cairo_loto_poc::interfaces::tickets_handler_v01::{
     TicketsHandlerABIDispatcher, TicketsHandlerABIDispatcherTrait,
 };
@@ -43,4 +43,19 @@ fn test__basic_burn() {
 
     state._basic_burn(1);
     assert_eq!(state.erc721.balance_of(OTHER()), 0);
+}
+
+#[test]
+#[should_panic]
+fn test_panic_burn() {
+    let mut state = TicketsHandlerContract::contract_state_for_testing();
+    let mut token_ids = array![TOKEN_1, TOKEN_2, TOKEN_3].span();
+    state._mint_assets(OWNER(), token_ids);
+
+    assert_eq!(state.erc721.balance_of(OWNER()), 3);
+
+    testing::set_caller_address(OTHER());
+    // NOW, TEST SHOULD PANIC BECAUSE "OTHER()" IS NOT THE OWNER
+    state._basic_burn(1);
+    assert_eq!(state.erc721.balance_of(OWNER()), 2);
 }
