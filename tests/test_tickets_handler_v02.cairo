@@ -77,6 +77,28 @@ fn setup_dispatcher() -> TicketsHandlerABIDispatcher {
     dispatcher
 }
 
+fn setup_max() -> TicketsHandlerABIDispatcher {
+    let mut calldata = array![];
+    let mut token_ids: Array<u256> = array![1,2,3,4,5,6,7,8,9,10];
+
+    // Set caller as `OWNER`
+    testing::set_contract_address(OWNER());
+
+    calldata.append_serde(NAME());
+    calldata.append_serde(SYMBOL());
+    calldata.append_serde(BASE_URI());
+    calldata.append_serde(OWNER());
+    calldata.append_serde(token_ids);
+    calldata.append_serde(OWNER());
+    calldata.append_serde(ETH_ADDRS());
+    calldata.append_serde(TEN_WITH_6_DECIMALS);
+
+    let address = utils::deploy(TicketsHandlerContract::TEST_CLASS_HASH, calldata);
+    let dispatcher = TicketsHandlerABIDispatcher { contract_address: address };
+    utils::drop_events(dispatcher.contract_address, TOKENS_LEN.try_into().unwrap() + 1);
+    dispatcher
+}
+
 fn setup_receiver() -> ContractAddress {
     utils::deploy(SnakeERC721ReceiverMock::TEST_CLASS_HASH, array![])
 }
@@ -350,26 +372,38 @@ fn test_mint_type2() {
     assert_eq!(state.erc721.balance_of(OWNER()), 2);
 }
 
-// //TODO: test mint() that panics for exceeding limit
-// #[test]
-// fn test_() {
-//     let loto_tickets = setup_dispatcher();
-//     assert_eq!(a, b);
-// }
+#[test]
+#[should_panic]
+fn test_mint_11th_ticket() {
+    let loto_tickets = setup_max(); // "OWNER" gets 10 tickets at deployment
 
-// //TODO: test burn()
-// #[test]
-// fn test_() {
-//     let loto_tickets = setup_dispatcher();
-//     assert_eq!(a, b);
-// }
+    testing::set_contract_address(OWNER());
 
-// //TODO: test burn() that panics for wrong owner
-// #[test]
-// fn test_() {
-//     let loto_tickets = setup_dispatcher();
-//     assert_eq!(a, b);
-// }
+    loto_tickets.free_mint(); // TEST PANICS BECAUSE LIMIT OF 10 TICKETS ALREADY REACHED
+}
+
+#[test]
+fn test_basic_burn() {
+    let mut state = TicketsHandlerContract::contract_state_for_testing();
+    testing::set_caller_address(OWNER());
+
+    state.free_mint();
+    assert_eq!(state.erc721.balance_of(OWNER()), 1);
+
+    state.basic_burn(1);
+    assert_eq!(state.erc721.balance_of(OWNER()), 0);
+}
+
+#[test]
+#[should_panic]
+fn test_burn_not_owner() {
+    let loto_tickets = setup_dispatcher(); // "OWNER" receives 3 tickets at deployment
+
+    testing::set_contract_address(OTHER());
+
+    loto_tickets.basic_burn(1); // TEST PANICS BECAUSE OTHER IS NOT THE TICKET OWNER
+}
+
 
 
 //
