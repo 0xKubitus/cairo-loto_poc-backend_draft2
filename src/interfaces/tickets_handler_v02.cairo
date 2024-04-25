@@ -9,6 +9,8 @@ trait TicketsHandlerABI<TState> {
     fn ticket_value(self: @TState) -> u256;
     fn circulating_supply(self: @TState) -> u256;
     fn total_tickets_emitted(self: @TState) -> u256;
+    fn free_mint(ref self: TState);
+    fn basic_burn(ref self: TState, token_id: u256);
 
     // IERC721
     fn balance_of(self: @TState, account: ContractAddress) -> u256;

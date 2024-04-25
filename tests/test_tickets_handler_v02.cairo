@@ -1,7 +1,7 @@
 use openzeppelin::introspection::interface::ISRC5_ID;
 use cairo_loto_poc::tickets_handler_v02::TicketsHandlerContract;
-use cairo_loto_poc::tickets_handler_v02::TicketsHandlerContract::PrivateImpl;
-use cairo_loto_poc::interfaces::tickets_handler_v01::{
+use cairo_loto_poc::tickets_handler_v02::TicketsHandlerContract::{PrivateImpl, TicketsHandlerImpl, ITicketsHandlerTrait};
+use cairo_loto_poc::interfaces::tickets_handler_v02::{
     TicketsHandlerABIDispatcher, TicketsHandlerABIDispatcherTrait,
 };
 use cairo_loto_poc::testing_utils::access::test_ownable::assert_event_ownership_transferred;
@@ -117,45 +117,45 @@ fn test__mint_assets() {
 }
 
 #[test]
-fn test__free_mint() {
+fn test__mint() {
     let mut state = TicketsHandlerContract::contract_state_for_testing();
+    testing::set_caller_address(OWNER()); //? is this necessary?
 
-    testing::set_caller_address(OTHER());
+    state._mint(OWNER(), 1);
+    state._mint(OWNER(), 2);
 
-    state._free_mint();
-    state._free_mint();
-    assert_eq!(state.erc721.balance_of(OTHER()), 2);
+    assert_eq!(state.erc721.balance_of(OWNER()), 2);
 }
 
 #[test]
 #[should_panic]
-fn test__free_mint_11th_ticket() {
+fn test__mint_11th_ticket() {
     let mut state = TicketsHandlerContract::contract_state_for_testing();
-    testing::set_caller_address(OTHER());
+    testing::set_caller_address(OWNER());
 
     let calldata: Array<u256> = array![1,2,3,4,5,6,7,8,9,10];
-    state._mint_assets(OTHER(), calldata.span());
+    state._mint_assets(OWNER(), calldata.span());
 
     // TEST PANICS HERE BECAUSE TICKET MAX LIMIT PER ACCOUNT = 10
-    state._free_mint();
+    state._mint(OWNER(), 11);
 }
 
 #[test]
-fn test__basic_burn() {
+fn test__burn() {
     let mut state = TicketsHandlerContract::contract_state_for_testing();
 
-    testing::set_caller_address(OTHER());
+    testing::set_caller_address(OWNER());
 
-    state._free_mint();
-    assert_eq!(state.erc721.balance_of(OTHER()), 1);
+    state._mint(OWNER(), 1);
+    assert_eq!(state.erc721.balance_of(OWNER()), 1);
 
-    state._basic_burn(1);
-    assert_eq!(state.erc721.balance_of(OTHER()), 0);
+    state._burn(1);
+    assert_eq!(state.erc721.balance_of(OWNER()), 0);
 }
 
 #[test]
 #[should_panic]
-fn test_basic_burn_not_ticketOwner() {
+fn test_burn_not_ticketOwner() {
     let mut state = TicketsHandlerContract::contract_state_for_testing();
     let mut token_ids = array![TOKEN_1, TOKEN_2, TOKEN_3].span();
     state._mint_assets(OWNER(), token_ids);
@@ -163,7 +163,7 @@ fn test_basic_burn_not_ticketOwner() {
 
     // TEST PANICS BECAUSE "OTHER()" IS NOT THE OWNER OF THE TICKET
     testing::set_caller_address(OTHER());
-    state._basic_burn(1);
+    state._burn(1);
 }
 
 
@@ -283,6 +283,98 @@ fn test_get_approved_nonexistent() {
     let dispatcher = setup_dispatcher();
     dispatcher.get_approved(NONEXISTENT);
 }
+
+//
+// CairoLotoTicketComponent external functions (which are getters only)
+//
+
+#[test]
+fn test_underlying_erc20_asset() {
+    let tickets_handler = setup_dispatcher();
+    assert_eq!(tickets_handler.underlying_erc20_asset(), ETH_ADDRS());
+}
+
+#[test]
+fn test_ticket_value() {
+    let tickets_handler = setup_dispatcher();
+    assert_eq!(tickets_handler.ticket_value(), TEN_WITH_6_DECIMALS);
+}
+
+#[test]
+fn test_circulating_supply() {
+    let tickets_handler = setup_dispatcher();
+    assert_eq!(tickets_handler.circulating_supply(), 3);
+}
+
+#[test]
+fn test_total_tickets_emitted() {
+    let tickets_handler = setup_dispatcher();
+    assert_eq!(tickets_handler.total_tickets_emitted(), 3);
+}
+
+// =================================================================
+
+// SETTERS (External/Public Functions)
+
+//
+// Test TicketsHandlerContract external functions (ICairoLotoTicket)
+//
+
+//! WHICH KIND OF TEST IS BETTER/MORE SUITABLE?
+//? OPTION 1: deploying the contract with `starknet::deploy_syscall()`
+#[test]
+fn test_mint_type1() {
+    let tickets_handler = setup_dispatcher();
+
+    // using `set_contract_address()` in this case because
+    // `set_caller_address()` makes the test fail.
+    testing::set_contract_address(OTHER());
+    //? => I suppose that means that it is mandatory
+    //?    when using the `deploy_syscall()` method?
+
+    tickets_handler.free_mint();
+    assert_eq!(tickets_handler.balance_of(OTHER()), 1);
+}
+//? OR, OPTION 2: testing without deploying using `contract_state_for_testing()`
+#[test]
+fn test_mint_type2() {
+    let mut state = TicketsHandlerContract::contract_state_for_testing();
+
+    // In this case, it is now mandatory to use
+    // `set_caller_address()`, not `set_contract_address()` !
+    testing::set_caller_address(OWNER());
+
+    state.free_mint();
+    state.free_mint();
+
+    assert_eq!(state.erc721.balance_of(OWNER()), 2);
+}
+
+// //TODO: test mint() that panics for exceeding limit
+// #[test]
+// fn test_() {
+//     let loto_tickets = setup_dispatcher();
+//     assert_eq!(a, b);
+// }
+
+// //TODO: test burn()
+// #[test]
+// fn test_() {
+//     let loto_tickets = setup_dispatcher();
+//     assert_eq!(a, b);
+// }
+
+// //TODO: test burn() that panics for wrong owner
+// #[test]
+// fn test_() {
+//     let loto_tickets = setup_dispatcher();
+//     assert_eq!(a, b);
+// }
+
+
+//
+// Functions from OZ's ERC721Upgradeable Preset
+//
 
 //
 // approve
@@ -1213,34 +1305,6 @@ fn test_state_persists_after_upgrade() {
     let v2 = IERC721Dispatcher { contract_address: v1.contract_address };
     let snake_balance = v2.balance_of(RECIPIENT());
     assert_eq!(snake_balance, camel_balance);
-}
-
-//
-// Test CairoLotoTicketComponent external functions (which are getters only)
-//
-
-#[test]
-fn test_underlying_erc20_asset() {
-    let loto_tickets = setup_dispatcher();
-    assert_eq!(loto_tickets.underlying_erc20_asset(), ETH_ADDRS());
-}
-
-#[test]
-fn ticket_value() {
-    let loto_tickets = setup_dispatcher();
-    assert_eq!(loto_tickets.ticket_value(), TEN_WITH_6_DECIMALS);
-}
-
-#[test]
-fn circulating_supply() {
-    let loto_tickets = setup_dispatcher();
-    assert_eq!(loto_tickets.circulating_supply(), 3);
-}
-
-#[test]
-fn total_tickets_emitted() {
-    let loto_tickets = setup_dispatcher();
-    assert_eq!(loto_tickets.total_tickets_emitted(), 3);
 }
 
 

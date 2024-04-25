@@ -103,6 +103,25 @@ mod TicketsHandlerContract {
     //
     // External/Public functions
     //
+    #[abi(per_item)]
+    #[generate_trait]
+    impl TicketsHandlerImpl of ITicketsHandlerTrait {
+        #[external(v0)]
+        fn free_mint(ref self: ContractState,) {
+            // Set the caller's address and the ticket's token_id
+            let caller = get_caller_address();
+            let token_id = self.ticket.total_supply.read() + 1;
+            // Mints ticket to the caller
+            self._mint(caller, token_id);
+        }
+
+        #[external(v0)]
+        fn basic_burn(ref self: ContractState, token_id: u256) {
+            self._burn(token_id);
+        }
+    }
+
+
     #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
         /// Upgrades the contract class hash to `new_class_hash`.
@@ -134,25 +153,24 @@ mod TicketsHandlerContract {
             }
         }
 
-        /// Mints one ticket/token to the `caller` (for free).
-        fn _free_mint(ref self: ContractState,) {
-            // Set the caller's address and the ticket's token id
-            let caller = get_caller_address();
-            let token_id = self.ticket.total_supply.read() + 1;
+        /// Mints one ticket/token to the `caller`.
+        fn _mint(ref self: ContractState, recipient: ContractAddress, token_id: u256) {
             // Ensure that the caller's balance is < 10 tickets
-            assert(self.erc721.balance_of(caller) < 10_u256, 'Account already owns 10 tickets');
+            assert(self.erc721.balance_of(recipient) < 10_u256, 'Account already owns 10 tickets');
             // Mint the ticket
-            self.erc721._mint(caller, token_id);
+            self.erc721._mint(recipient, token_id);
             // Update current and total supply
             self.ticket._increase_circulating_supply();
             self.ticket._increase_total_tickets_emitted();
         }
 
-        /// Burns one ticket/token from the `caller` (no retrieval system).
-        fn _basic_burn(ref self: ContractState, token_id: u256) {
+        /// Burns one ticket/token from the `caller`.
+        fn _burn(ref self: ContractState, token_id: u256) {
             // Ensure caller is the ticket's owner
             let caller = get_caller_address();
-            assert_eq!(caller, self.erc721._owner_of(token_id));
+            let ticket_owner = self.erc721._owner_of(token_id);
+            assert_eq!(caller, ticket_owner);
+            
             // Burn ticket + decrease current supply
             self.erc721._burn(token_id);
             self.ticket._decrease_circulating_supply();
