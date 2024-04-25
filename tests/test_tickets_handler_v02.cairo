@@ -128,6 +128,19 @@ fn test__free_mint() {
 }
 
 #[test]
+#[should_panic]
+fn test__free_mint_11th_ticket() {
+    let mut state = TicketsHandlerContract::contract_state_for_testing();
+    testing::set_caller_address(OTHER());
+
+    let calldata: Array<u256> = array![1,2,3,4,5,6,7,8,9,10];
+    state._mint_assets(OTHER(), calldata.span());
+
+    // TEST PANICS HERE BECAUSE TICKET MAX LIMIT PER ACCOUNT = 10
+    state._free_mint();
+}
+
+#[test]
 fn test__basic_burn() {
     let mut state = TicketsHandlerContract::contract_state_for_testing();
 
@@ -142,17 +155,15 @@ fn test__basic_burn() {
 
 #[test]
 #[should_panic]
-fn test_panic_burn() {
+fn test_basic_burn_not_ticketOwner() {
     let mut state = TicketsHandlerContract::contract_state_for_testing();
     let mut token_ids = array![TOKEN_1, TOKEN_2, TOKEN_3].span();
     state._mint_assets(OWNER(), token_ids);
-
     assert_eq!(state.erc721.balance_of(OWNER()), 3);
 
+    // TEST PANICS BECAUSE "OTHER()" IS NOT THE OWNER OF THE TICKET
     testing::set_caller_address(OTHER());
-    // NOW, TEST SHOULD PANIC BECAUSE "OTHER()" IS NOT THE OWNER
     state._basic_burn(1);
-    assert_eq!(state.erc721.balance_of(OWNER()), 2);
 }
 
 

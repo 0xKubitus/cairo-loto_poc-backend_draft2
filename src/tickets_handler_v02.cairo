@@ -136,11 +136,14 @@ mod TicketsHandlerContract {
 
         /// Mints one ticket/token to the `caller` (for free).
         fn _free_mint(ref self: ContractState,) {
+            // Set the caller's address and the ticket's token id
             let caller = get_caller_address();
-            let id = self.ticket.total_supply.read() + 1;
-
-            self.erc721._mint(caller, id);
-
+            let token_id = self.ticket.total_supply.read() + 1;
+            // Ensure that the caller's balance is < 10 tickets
+            assert(self.erc721.balance_of(caller) < 10_u256, 'Account already owns 10 tickets');
+            // Mint the ticket
+            self.erc721._mint(caller, token_id);
+            // Update current and total supply
             self.ticket._increase_circulating_supply();
             self.ticket._increase_total_tickets_emitted();
         }
