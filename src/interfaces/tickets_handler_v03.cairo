@@ -10,8 +10,8 @@ trait TicketsHandlerABI<TState> {
     fn total_tickets_emitted(self: @TState) -> u256;
     fn mint(ref self: TState, to: ContractAddress);
     fn burn(ref self: TState, token_id: u256);
-    fn free_mint(ref self: TState); // v0.2 function, TO BE DELETED
-    fn basic_burn(ref self: TState, token_id: u256); // v0.2 function, TO BE DELETED
+    // fn free_mint(ref self: TState); // v0.2 function, TO BE DELETED
+    // fn basic_burn(ref self: TState, token_id: u256); // v0.2 function, TO BE DELETED
 
     // IERC721
     fn balance_of(self: @TState, account: ContractAddress) -> u256;
