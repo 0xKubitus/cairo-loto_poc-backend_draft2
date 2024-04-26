@@ -127,5 +127,6 @@ fn test_mint() {
     assert_eq!(underlying_erc20_dispatcher.allowance(OWNER(), tickets_handler_addrs), TEN_WITH_6_DECIMALS); // not needed
 
     tickets_handler_dispatcher.mint(OWNER());
-    // assert_eq!(tickets_handler_dispatcher.owner_of(4), OWNER()); // <= this test currently fails
+    assert_eq!(tickets_handler_dispatcher.balance_of(OWNER()), 4);
+    assert_eq!(tickets_handler_dispatcher.owner_of(4), OWNER());
 }

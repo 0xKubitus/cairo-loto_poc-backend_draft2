@@ -125,10 +125,26 @@ mod TicketsHandlerContract {
         #[external(v0)]
         // To use this function, the `caller` must have `approved`
         // this contract to spend the right amount of underlying asset.
-        fn mint(ref self: ContractState, caller: ContractAddress,) {
+        // fn mint(ref self: ContractState,) {
+        //     let ticket_handler = get_contract_address();
+        //     let caller = get_caller_address();
 
+        //     // Get ticket's `underlying_asset` and `value`
+        //     let underlying_erc20 = self.ticket.underlying_asset.read();
+        //     let ticket_value = self.ticket.value.read();
+
+        //     // Transfer `ticket_value` of `underlying_asset` from `caller` to this contract
+        //     IERC20Dispatcher { contract_address: underlying_erc20 }.transfer_from(caller, ticket_handler, ticket_value);
+
+        //     // Define next ticket's `token_id`
+        //     let token_id = self.ticket.total_supply.read() + 1;
+
+        //     // Mints ticket to the caller
+        //     self._mint(caller, token_id);
+        // }
+        fn mint(ref self: ContractState, caller: ContractAddress,) {
             let ticket_handler = get_contract_address();
-            // TODO: Add deposit system (of underlying ERC20 asset)
+
             // Get ticket's `underlying_asset` and `value`
             let underlying_erc20 = self.ticket.underlying_asset.read();
             let ticket_value = self.ticket.value.read();
@@ -136,11 +152,11 @@ mod TicketsHandlerContract {
             // Transfer `ticket_value` of `underlying_asset` from `caller` to this contract
             IERC20Dispatcher { contract_address: underlying_erc20 }.transfer_from(caller, ticket_handler, ticket_value);
 
-            // // Define next ticket's `token_id`
-            // let token_id = self.ticket.total_supply.read() + 1;
+            // Define next ticket's `token_id`
+            let token_id = self.ticket.total_supply.read() + 1;
 
-            // // Mints ticket to the caller
-            // self._mint(caller, token_id);
+            // Mints ticket to the caller
+            self._mint(caller, token_id);
         }
 
         #[external(v0)]
