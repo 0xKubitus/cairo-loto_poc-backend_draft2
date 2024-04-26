@@ -117,16 +117,50 @@ fn test_mint() {
     let tickets_handler_addrs = tickets_handler_dispatcher.contract_address;
     
     let amount = tickets_handler_dispatcher.ticket_value();
-    assert_eq!(tickets_handler_dispatcher.balance_of(OWNER()), TOKENS_LEN); // not needed
-    assert_eq!(underlying_erc20_dispatcher.balance_of(OWNER()), TEN_WITH_6_DECIMALS); // not needed
+    // assert_eq!(tickets_handler_dispatcher.balance_of(OWNER()), TOKENS_LEN); // not needed
+    // assert_eq!(underlying_erc20_dispatcher.balance_of(OWNER()), TEN_WITH_6_DECIMALS); // not needed
+    assert_eq!(underlying_erc20_dispatcher.balance_of(tickets_handler_addrs), 0);
 
     testing::set_contract_address(OWNER());
     // testing::set_caller_address(OWNER()); // this one works as well
 
     underlying_erc20_dispatcher.approve(tickets_handler_addrs, amount);
-    assert_eq!(underlying_erc20_dispatcher.allowance(OWNER(), tickets_handler_addrs), TEN_WITH_6_DECIMALS); // not needed
+    // assert_eq!(underlying_erc20_dispatcher.allowance(OWNER(), tickets_handler_addrs), TEN_WITH_6_DECIMALS); // not needed
 
     tickets_handler_dispatcher.mint(OWNER());
     assert_eq!(tickets_handler_dispatcher.balance_of(OWNER()), 4);
     assert_eq!(tickets_handler_dispatcher.owner_of(4), OWNER());
+    assert_eq!(tickets_handler_dispatcher.circulating_supply(), 4);
+    assert_eq!(tickets_handler_dispatcher.total_tickets_emitted(), 4);
+    // make sure that now, ticketsHandler contract owns the value of 1 ticket in `underlying_erc20_asset`
+    assert_eq!(underlying_erc20_dispatcher.balance_of(tickets_handler_addrs), tickets_handler_dispatcher.ticket_value());
+
+    // TODO: add test controlling that the right event(s) are emitted
+}
+
+#[test]
+fn test_burn() {
+    let underlying_erc20_dispatcher = setup_erc20_dispatcher();
+    let underlying_erc20_addrs = underlying_erc20_dispatcher.contract_address;
+    let tickets_handler_dispatcher = setup_ticket_dispatcher(underlying_erc20_addrs);
+    let tickets_handler_addrs = tickets_handler_dispatcher.contract_address;
+    let amount = tickets_handler_dispatcher.ticket_value();
+
+    // testing::set_caller_address(OWNER());
+    testing::set_contract_address(OWNER()); // this one works as well
+
+    // First, a ticket must be minted because TicketsHandlerContract does not own 
+    // any underlying asset at deployment (so it cant giveback a deposit that does not exist)
+    underlying_erc20_dispatcher.approve(tickets_handler_addrs, amount);
+    tickets_handler_dispatcher.mint(OWNER());
+    assert_eq!(underlying_erc20_dispatcher.balance_of(tickets_handler_addrs), tickets_handler_dispatcher.ticket_value()); // not needed
+
+    tickets_handler_dispatcher.burn(1);
+    assert_eq!(tickets_handler_dispatcher.balance_of(OWNER()), 3);
+    assert_eq!(tickets_handler_dispatcher.circulating_supply(), 3);
+    assert_eq!(tickets_handler_dispatcher.total_tickets_emitted(), 4);
+    // make sure that after the burn tx, the ticketsHandler contract does not own anymore of the underlying asset
+    assert_eq!(underlying_erc20_dispatcher.balance_of(tickets_handler_addrs), 0);
+
+    // TODO: add test controlling that the right event(s) are emitted
 }

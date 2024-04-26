@@ -149,6 +149,7 @@ mod TicketsHandlerContract {
         fn burn(ref self: ContractState, token_id: u256) {
             self._burn(token_id);
             // TODO: Add retrieval system (of underlying ERC20 deposited amount)
+            IERC20Dispatcher { contract_address: self.ticket.underlying_asset.read() }.transfer(get_caller_address(), self.ticket.value.read());
         }
     }
 
