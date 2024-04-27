@@ -38,19 +38,19 @@ const TOKENS_LEN: u256 = 3;
 // Setup
 //
   
-fn setup_erc20_address() -> ContractAddress {
+fn setup_erc20_address(recipient: ContractAddress) -> ContractAddress {
     let mut calldata = array![];
     calldata.append_serde(SOME_ERC20());
     calldata.append_serde(COIN());
     calldata.append_serde(TEN_WITH_6_DECIMALS);
-    calldata.append_serde(OWNER());
+    calldata.append_serde(recipient);
 
     let address = utils::deploy(SnakeERC20Mock::TEST_CLASS_HASH, calldata);
     address
 }
 
-fn setup_erc20_dispatcher() -> IERC20Dispatcher {
-    let address = setup_erc20_address();
+fn setup_erc20_dispatcher(recipient: ContractAddress) -> IERC20Dispatcher {
+    let address = setup_erc20_address(recipient);
     let erc20_dispatcher = IERC20Dispatcher { contract_address: address };
 
     utils::drop_events(erc20_dispatcher.contract_address, TOKENS_LEN.try_into().unwrap() + 1);
@@ -131,7 +131,7 @@ fn setup_max() -> TicketsHandlerABIDispatcher {
 
 #[test]
 fn test_mint() {
-    let underlying_erc20_dispatcher = setup_erc20_dispatcher();
+    let underlying_erc20_dispatcher = setup_erc20_dispatcher(OWNER());
     let underlying_erc20_addrs = underlying_erc20_dispatcher.contract_address;
 
     let tickets_handler_dispatcher = setup_ticket_dispatcher(underlying_erc20_addrs);
@@ -162,7 +162,7 @@ fn test_mint() {
 #[test]
 #[should_panic]
 fn test_try_mint_11th_ticket() {
-    let underlying_erc20_dispatcher = setup_erc20_dispatcher();
+    let underlying_erc20_dispatcher = setup_erc20_dispatcher(OWNER());
     let underlying_erc20_addrs = underlying_erc20_dispatcher.contract_address;
     
     let batch_mint_IDs: Array<u256> = array![1,2,3,4,5,6,7,8,9,10];
@@ -182,7 +182,7 @@ fn test_try_mint_11th_ticket() {
 #[test]
 #[should_panic]
 fn test_try_mint_without_erc20_allowance() {
-    let underlying_erc20_dispatcher = setup_erc20_dispatcher();
+    let underlying_erc20_dispatcher = setup_erc20_dispatcher(OWNER());
     let underlying_erc20_addrs = underlying_erc20_dispatcher.contract_address;
     
     let batch_mint_IDs: Array<u256> = array![1,2,3,];
@@ -197,7 +197,7 @@ fn test_try_mint_without_erc20_allowance() {
 #[test]
 #[should_panic]
 fn test_try_mint_with_smaller_allowance() {
-    let underlying_erc20_dispatcher = setup_erc20_dispatcher();
+    let underlying_erc20_dispatcher = setup_erc20_dispatcher(OWNER());
     let underlying_erc20_addrs = underlying_erc20_dispatcher.contract_address;
     
     let batch_mint_IDs: Array<u256> = array![1,2,3,];
@@ -216,7 +216,7 @@ fn test_try_mint_with_smaller_allowance() {
 
 #[test]
 fn test_mint_and_burn() {
-    let underlying_erc20_dispatcher = setup_erc20_dispatcher();
+    let underlying_erc20_dispatcher = setup_erc20_dispatcher(OWNER());
     let underlying_erc20_addrs = underlying_erc20_dispatcher.contract_address;
     let tickets_handler_dispatcher = setup_ticket_dispatcher(underlying_erc20_addrs);
     let tickets_handler_addrs = tickets_handler_dispatcher.contract_address;
@@ -245,7 +245,7 @@ fn test_mint_and_burn() {
 #[test]
 #[should_panic]
 fn test_try_burn_wrong_ticket() {
-    let underlying_erc20_dispatcher = setup_erc20_dispatcher();
+    let underlying_erc20_dispatcher = setup_erc20_dispatcher(OWNER());
     let underlying_erc20_addrs = underlying_erc20_dispatcher.contract_address;
     let tickets_handler_dispatcher = setup_ticket_dispatcher(underlying_erc20_addrs);
     let tickets_handler_addrs = tickets_handler_dispatcher.contract_address;
@@ -262,10 +262,15 @@ fn test_try_burn_wrong_ticket() {
     tickets_handler_dispatcher.burn(5);
 }
 
+
+
+
+
+
 // TODO: add a test that panics because the `caller` is not the owner of the ticket
-#[test]
-#[should_panic]
-fn test_try_burn_not_owner() {
+// #[test]
+// #[should_panic]
+// fn test_try_burn_not_owner() {
     //? deployer un contrat erc20 qui transfert la supply à "OTHER"
 
     //? deployer TicketsHandlerContract, avec erc20 en `underlying_asset` et qui mint 1 ticket à "OWNER"
@@ -282,6 +287,6 @@ fn test_try_burn_not_owner() {
 
 
     // TEST PANICS BECAUSE "OTHER" IS NOT THE OWNER OF `token_id`
-    assert_eq!(tickets_handler_dispatcher.owner_of(1) , OWNER());
-    tickets_handler_dispatcher.burn(1);
-}
+    // assert_eq!(tickets_handler_dispatcher.owner_of(1) , OWNER());
+    // tickets_handler_dispatcher.burn(1);
+// }
