@@ -5,7 +5,9 @@ use cairo_loto_poc::interfaces::tickets_handler_v01::{
 };
 
 use openzeppelin::token::erc721::ERC721Component::ERC721Impl;
-use openzeppelin::tests::utils::constants::{OWNER, OTHER,// ZERO, DATA, SPENDER, RECIPIENT,  OPERATOR, CLASS_HASH_ZERO, PUBKEY, NAME, SYMBOL,
+use openzeppelin::tests::utils::constants::{
+    OWNER,
+    OTHER, // ZERO, DATA, SPENDER, RECIPIENT,  OPERATOR, CLASS_HASH_ZERO, PUBKEY, NAME, SYMBOL,
 // BASE_URI
 };
 
@@ -56,7 +58,7 @@ fn test__mint_11th_ticket() {
     let mut state = TicketsHandlerContract::contract_state_for_testing();
     testing::set_caller_address(OWNER());
 
-    let calldata: Array<u256> = array![1,2,3,4,5,6,7,8,9,10];
+    let calldata: Array<u256> = array![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     state._mint_assets(OWNER(), calldata.span());
 
     // TEST PANICS HERE BECAUSE TICKET MAX LIMIT PER ACCOUNT = 10

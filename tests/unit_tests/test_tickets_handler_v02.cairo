@@ -1,6 +1,8 @@
 use openzeppelin::introspection::interface::ISRC5_ID;
 use cairo_loto_poc::tickets_handler_v02::TicketsHandlerContract;
-use cairo_loto_poc::tickets_handler_v02::TicketsHandlerContract::{PrivateImpl, TicketsHandlerImpl, ITicketsHandlerTrait};
+use cairo_loto_poc::tickets_handler_v02::TicketsHandlerContract::{
+    PrivateImpl, TicketsHandlerImpl, ITicketsHandlerTrait
+};
 use cairo_loto_poc::interfaces::tickets_handler_v02::{
     TicketsHandlerABIDispatcher, TicketsHandlerABIDispatcherTrait,
 };
@@ -79,7 +81,7 @@ fn setup_dispatcher() -> TicketsHandlerABIDispatcher {
 
 fn setup_max() -> TicketsHandlerABIDispatcher {
     let mut calldata = array![];
-    let mut token_ids: Array<u256> = array![1,2,3,4,5,6,7,8,9,10];
+    let mut token_ids: Array<u256> = array![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
     // Set caller as `OWNER`
     testing::set_contract_address(OWNER());
@@ -155,7 +157,7 @@ fn test__mint_11th_ticket() {
     let mut state = TicketsHandlerContract::contract_state_for_testing();
     testing::set_caller_address(OWNER());
 
-    let calldata: Array<u256> = array![1,2,3,4,5,6,7,8,9,10];
+    let calldata: Array<u256> = array![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     state._mint_assets(OWNER(), calldata.span());
 
     // TEST PANICS HERE BECAUSE TICKET MAX LIMIT PER ACCOUNT = 10
@@ -403,7 +405,6 @@ fn test_burn_not_owner() {
 
     loto_tickets.basic_burn(1); // TEST PANICS BECAUSE OTHER IS NOT THE TICKET OWNER
 }
-
 
 
 //

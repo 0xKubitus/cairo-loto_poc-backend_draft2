@@ -111,45 +111,47 @@ mod TicketsHandlerContract {
         /// To use this function, the `user` must have `approved`
         /// this contract to spend the right amount of underlying asset.
         fn mint(ref self: ContractState, user: ContractAddress,) {
-                let ticket_handler = get_contract_address();
-            
-                // Get ticket's `underlying_asset` and `value`
-                let underlying_erc20 = self.ticket.underlying_asset.read();
-                let ticket_value = self.ticket.value.read();
-            
-                // Transfer `ticket_value` of `underlying_asset` from `caller` to this contract
-                IERC20Dispatcher { contract_address: underlying_erc20 }.transfer_from(user, ticket_handler, ticket_value);
-            
-                // Define next ticket's `token_id`
-                let token_id = self.ticket.total_supply.read() + 1;
-            
-                // Mints one ticket to the `user`
-                self._mint(user, token_id);
-            }
-            //? below is a version where the recipient of the ticket is systematically the `caller`
-            // fn mint(ref self: ContractState,) {
-            //     let ticket_handler = get_contract_address();
-            //     let caller = get_caller_address();
-    
-            //     // Get ticket's `underlying_asset` and `value`
-            //     let underlying_erc20 = self.ticket.underlying_asset.read();
-            //     let ticket_value = self.ticket.value.read();
-    
-            //     // Transfer `ticket_value` of `underlying_asset` from `caller` to this contract
-            //     IERC20Dispatcher { contract_address: underlying_erc20 }.transfer_from(caller, ticket_handler, ticket_value);
-    
-            //     // Define next ticket's `token_id`
-            //     let token_id = self.ticket.total_supply.read() + 1;
-    
-            //     // Mints ticket to the caller
-            //     self._mint(caller, token_id);
-            // }
+            let ticket_handler = get_contract_address();
+
+            // Get ticket's `underlying_asset` and `value`
+            let underlying_erc20 = self.ticket.underlying_asset.read();
+            let ticket_value = self.ticket.value.read();
+
+            // Transfer `ticket_value` of `underlying_asset` from `caller` to this contract
+            IERC20Dispatcher { contract_address: underlying_erc20 }
+                .transfer_from(user, ticket_handler, ticket_value);
+
+            // Define next ticket's `token_id`
+            let token_id = self.ticket.total_supply.read() + 1;
+
+            // Mints one ticket to the `user`
+            self._mint(user, token_id);
+        }
+        //? below is a version where the recipient of the ticket is systematically the `caller`
+        // fn mint(ref self: ContractState,) {
+        //     let ticket_handler = get_contract_address();
+        //     let caller = get_caller_address();
+
+        //     // Get ticket's `underlying_asset` and `value`
+        //     let underlying_erc20 = self.ticket.underlying_asset.read();
+        //     let ticket_value = self.ticket.value.read();
+
+        //     // Transfer `ticket_value` of `underlying_asset` from `caller` to this contract
+        //     IERC20Dispatcher { contract_address: underlying_erc20 }.transfer_from(caller, ticket_handler, ticket_value);
+
+        //     // Define next ticket's `token_id`
+        //     let token_id = self.ticket.total_supply.read() + 1;
+
+        //     // Mints ticket to the caller
+        //     self._mint(caller, token_id);
+        // }
 
         #[external(v0)]
         fn burn(ref self: ContractState, token_id: u256) {
             self._burn(token_id);
             // TODO: Add retrieval system (of underlying ERC20 deposited amount)
-            IERC20Dispatcher { contract_address: self.ticket.underlying_asset.read() }.transfer(get_caller_address(), self.ticket.value.read());
+            IERC20Dispatcher { contract_address: self.ticket.underlying_asset.read() }
+                .transfer(get_caller_address(), self.ticket.value.read());
         }
     }
 
@@ -187,7 +189,6 @@ mod TicketsHandlerContract {
 
         /// Mints one ticket/token to the `caller`.
         fn _mint(ref self: ContractState, recipient: ContractAddress, token_id: u256) {
-
             // Ensure that the caller's balance is < 10 tickets
             assert(self.erc721.balance_of(recipient) < 10_u256, 'Account already owns 10 tickets');
             // TODO! instead of using a hardcoded value for the maximum nber of
@@ -207,12 +208,10 @@ mod TicketsHandlerContract {
             let caller = get_caller_address();
             let ticket_owner = self.erc721._owner_of(token_id);
             assert_eq!(caller, ticket_owner);
-            
+
             // Burn ticket + decrease current supply
             self.erc721._burn(token_id);
             self.ticket._decrease_circulating_supply();
         }
     }
-
-
 }

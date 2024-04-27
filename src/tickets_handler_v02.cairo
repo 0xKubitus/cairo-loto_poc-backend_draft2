@@ -170,12 +170,10 @@ mod TicketsHandlerContract {
             let caller = get_caller_address();
             let ticket_owner = self.erc721._owner_of(token_id);
             assert_eq!(caller, ticket_owner);
-            
+
             // Burn ticket + decrease current supply
             self.erc721._burn(token_id);
             self.ticket._decrease_circulating_supply();
         }
     }
-
-
 }
