@@ -187,8 +187,13 @@ mod TicketsHandlerContract {
 
         /// Mints one ticket/token to the `caller`.
         fn _mint(ref self: ContractState, recipient: ContractAddress, token_id: u256) {
+
             // Ensure that the caller's balance is < 10 tickets
             assert(self.erc721.balance_of(recipient) < 10_u256, 'Account already owns 10 tickets');
+            // TODO! instead of using a hardcoded value for the maximum nber of
+            //! tickets that an account can own, create a storage value for it
+            //! in the "ticket" component, and use that storage value here instead of "10_u256"!
+
             // Mint the ticket
             self.erc721._mint(recipient, token_id);
             // Update current and total supply
