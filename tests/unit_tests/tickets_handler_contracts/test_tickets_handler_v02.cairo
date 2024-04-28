@@ -1,9 +1,9 @@
 use openzeppelin::introspection::interface::ISRC5_ID;
-use cairo_loto_poc::tickets_handler_v03::TicketsHandlerContract;
-use cairo_loto_poc::tickets_handler_v03::TicketsHandlerContract::{
+use cairo_loto_poc::tickets_handler_v02::TicketsHandlerContract;
+use cairo_loto_poc::tickets_handler_v02::TicketsHandlerContract::{
     PrivateImpl, TicketsHandlerImpl, ITicketsHandlerTrait
 };
-use cairo_loto_poc::interfaces::tickets_handler_v03::{
+use cairo_loto_poc::interfaces::tickets_handler_v02::{
     TicketsHandlerABIDispatcher, TicketsHandlerABIDispatcherTrait,
 };
 use cairo_loto_poc::testing_utils::access::test_ownable::assert_event_ownership_transferred;
@@ -179,7 +179,7 @@ fn test__burn() {
 
 #[test]
 #[should_panic]
-fn test_burn_not_ticketOwner() {
+fn test__burn_not_ticket_owner() {
     let mut state = TicketsHandlerContract::contract_state_for_testing();
     let mut token_ids = array![TOKEN_1, TOKEN_2, TOKEN_3].span();
     state._mint_assets(OWNER(), token_ids);
@@ -356,7 +356,7 @@ fn test_mint_type1() {
     //? => I suppose that means that it is mandatory
     //?    when using the `deploy_syscall()` method?
 
-    tickets_handler.mint(OTHER);
+    tickets_handler.free_mint();
     assert_eq!(tickets_handler.balance_of(OTHER()), 1);
 }
 //? OR, OPTION 2: testing without deploying using `contract_state_for_testing()`

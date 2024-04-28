@@ -1,0 +1,1 @@
+mod test_component_cairo_loto_ticket;

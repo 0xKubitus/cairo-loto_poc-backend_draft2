@@ -1,8 +1,10 @@
 use openzeppelin::introspection::interface::ISRC5_ID;
-use cairo_loto_poc::oz_erc721_upgradeable::ERC721UpgradeablePreset::InternalImpl;
-use cairo_loto_poc::oz_erc721_upgradeable::ERC721UpgradeablePreset;
-use openzeppelin::presets::interfaces::{
-    ERC721UpgradeableABIDispatcher, ERC721UpgradeableABIDispatcherTrait
+use cairo_loto_poc::tickets_handler_v03::TicketsHandlerContract;
+use cairo_loto_poc::tickets_handler_v03::TicketsHandlerContract::{
+    PrivateImpl, TicketsHandlerImpl, ITicketsHandlerTrait
+};
+use cairo_loto_poc::interfaces::tickets_handler_v03::{
+    TicketsHandlerABIDispatcher, TicketsHandlerABIDispatcherTrait,
 };
 use cairo_loto_poc::testing_utils::access::test_ownable::assert_event_ownership_transferred;
 use cairo_loto_poc::testing_utils::mocks::account_mocks::{DualCaseAccountMock, CamelAccountMock};
@@ -20,6 +22,7 @@ use openzeppelin::tests::utils::constants::{
     ZERO, DATA, OWNER, SPENDER, RECIPIENT, OTHER, OPERATOR, CLASS_HASH_ZERO, PUBKEY, NAME, SYMBOL,
     BASE_URI
 };
+use cairo_loto_poc::testing_utils::constants::{TEN_WITH_6_DECIMALS, fake_ERC20_asset, ETH_ADDRS,};
 use openzeppelin::tests::utils;
 use openzeppelin::token::erc721::ERC721Component::ERC721Impl;
 use openzeppelin::token::erc721::ERC721Component;
@@ -49,7 +52,7 @@ fn V2_CLASS_HASH() -> ClassHash {
 // Setup
 //
 
-fn setup_dispatcher_with_event() -> ERC721UpgradeableABIDispatcher {
+fn setup_dispatcher_with_event() -> TicketsHandlerABIDispatcher {
     let mut calldata = array![];
     let mut token_ids = array![TOKEN_1, TOKEN_2, TOKEN_3];
 
@@ -62,14 +65,38 @@ fn setup_dispatcher_with_event() -> ERC721UpgradeableABIDispatcher {
     calldata.append_serde(OWNER());
     calldata.append_serde(token_ids);
     calldata.append_serde(OWNER());
+    calldata.append_serde(ETH_ADDRS());
+    calldata.append_serde(TEN_WITH_6_DECIMALS);
 
-    let address = utils::deploy(ERC721UpgradeablePreset::TEST_CLASS_HASH, calldata);
-    ERC721UpgradeableABIDispatcher { contract_address: address }
+    let address = utils::deploy(TicketsHandlerContract::TEST_CLASS_HASH, calldata);
+    TicketsHandlerABIDispatcher { contract_address: address }
 }
 
-fn setup_dispatcher() -> ERC721UpgradeableABIDispatcher {
+fn setup_dispatcher() -> TicketsHandlerABIDispatcher {
     let dispatcher = setup_dispatcher_with_event();
     // `OwnershipTransferred` + `Transfer`s
+    utils::drop_events(dispatcher.contract_address, TOKENS_LEN.try_into().unwrap() + 1);
+    dispatcher
+}
+
+fn setup_max() -> TicketsHandlerABIDispatcher {
+    let mut calldata = array![];
+    let mut token_ids: Array<u256> = array![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+    // Set caller as `OWNER`
+    testing::set_contract_address(OWNER());
+
+    calldata.append_serde(NAME());
+    calldata.append_serde(SYMBOL());
+    calldata.append_serde(BASE_URI());
+    calldata.append_serde(OWNER());
+    calldata.append_serde(token_ids);
+    calldata.append_serde(OWNER());
+    calldata.append_serde(ETH_ADDRS());
+    calldata.append_serde(TEN_WITH_6_DECIMALS);
+
+    let address = utils::deploy(TicketsHandlerContract::TEST_CLASS_HASH, calldata);
+    let dispatcher = TicketsHandlerABIDispatcher { contract_address: address };
     utils::drop_events(dispatcher.contract_address, TOKENS_LEN.try_into().unwrap() + 1);
     dispatcher
 }
@@ -93,12 +120,12 @@ fn setup_camel_account() -> ContractAddress {
 }
 
 //
-// _mint_assets
+// PRIVATE FUNCTIONS (ONLY FROM THIS CONTRACT, NOT ALL COMPONENTS INTERNALS)
 //
 
 #[test]
 fn test__mint_assets() {
-    let mut state = ERC721UpgradeablePreset::contract_state_for_testing();
+    let mut state = TicketsHandlerContract::contract_state_for_testing();
     let mut token_ids = array![TOKEN_1, TOKEN_2, TOKEN_3].span();
 
     state._mint_assets(OWNER(), token_ids);
@@ -113,6 +140,61 @@ fn test__mint_assets() {
     };
 }
 
+#[test]
+fn test__mint() {
+    let mut state = TicketsHandlerContract::contract_state_for_testing();
+    testing::set_caller_address(OWNER()); //? is this necessary?
+
+    state._mint(OWNER(), 1);
+    state._mint(OWNER(), 2);
+
+    assert_eq!(state.erc721.balance_of(OWNER()), 2);
+}
+
+#[test]
+#[should_panic]
+fn test__mint_11th_ticket() {
+    let mut state = TicketsHandlerContract::contract_state_for_testing();
+    testing::set_caller_address(OWNER());
+
+    let calldata: Array<u256> = array![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    state._mint_assets(OWNER(), calldata.span());
+
+    // TEST PANICS HERE BECAUSE TICKET MAX LIMIT PER ACCOUNT = 10
+    state._mint(OWNER(), 11);
+}
+
+#[test]
+fn test__burn() {
+    let mut state = TicketsHandlerContract::contract_state_for_testing();
+
+    testing::set_caller_address(OWNER());
+
+    state._mint(OWNER(), 1);
+    assert_eq!(state.erc721.balance_of(OWNER()), 1);
+    
+    state._burn(1);
+    assert_eq!(state.erc721.balance_of(OWNER()), 0);
+}
+
+#[test]
+#[should_panic]
+fn test__burn_not_ticket_owner() {
+    let mut state = TicketsHandlerContract::contract_state_for_testing();
+    let mut token_ids = array![TOKEN_1, TOKEN_2, TOKEN_3].span();
+    state._mint_assets(OWNER(), token_ids);
+    assert_eq!(state.erc721.balance_of(OWNER()), 3);
+    
+    // TEST PANICS BECAUSE "OTHER()" IS NOT THE OWNER OF THE TICKET
+    testing::set_caller_address(OTHER());
+    state._burn(1);
+}
+
+//
+// TEST EXTERNAL FUNCTIONS
+//
+
+
 //
 // constructor
 //
@@ -121,16 +203,19 @@ fn test__mint_assets() {
 fn test_constructor() {
     let dispatcher = setup_dispatcher_with_event();
 
+    // Check contract's owner value is correct
+    assert_eq!(dispatcher.owner(), OWNER());
+
     // Check interface registration
     let mut interface_ids = array![ISRC5_ID, IERC721_ID, IERC721_METADATA_ID];
     loop {
         let id = interface_ids.pop_front().unwrap();
         if interface_ids.len() == 0 {
             break;
-        }
+        }    
         let supports_interface = dispatcher.supports_interface(id);
         assert!(supports_interface);
-    };
+    };    
 
     // Check token balance and owner
     let mut tokens = array![TOKEN_1, TOKEN_2, TOKEN_3];
@@ -140,11 +225,11 @@ fn test_constructor() {
         let token = tokens.pop_front().unwrap();
         if tokens.len() == 0 {
             break;
-        }
+        }    
         let current_owner = dispatcher.owner_of(token);
         assert_eq!(current_owner, OWNER());
-    };
-}
+    };    
+}    
 
 #[test]
 fn test_constructor_events() {
@@ -158,14 +243,31 @@ fn test_constructor_events() {
             // Includes event queue check
             assert_only_event_transfer(dispatcher.contract_address, ZERO(), OWNER(), token);
             break;
-        }
+        }    
         assert_event_transfer(dispatcher.contract_address, ZERO(), OWNER(), token);
-    };
-}
+    };    
+}    
 
 //
-// Getters
+// Getters from ERC721 component
 //
+
+#[test]
+fn test_contract_owner() {
+    let dispatcher = setup_dispatcher();
+    assert_eq!(dispatcher.owner(), OWNER());
+}
+
+//? I dont think that this test is relevant/required because the function `OwnableComponent::owner()`
+//? does not take any parameter so it should always return the same result.
+//? Then, if above `fn test_contract_owner()` is successful,
+//? there is no reason the below test would fail, right?
+#[test]
+#[should_panic]
+fn test_wrong_contract_owner() {
+    let dispatcher = setup_dispatcher();
+    assert_eq!(dispatcher.owner(), OTHER());
+}
 
 #[test]
 fn test_balance_of() {
@@ -229,6 +331,42 @@ fn test_get_approved_nonexistent() {
     let dispatcher = setup_dispatcher();
     dispatcher.get_approved(NONEXISTENT);
 }
+
+//
+// CairoLotoTicketComponent external functions (which are getters only)
+//
+
+#[test]
+fn test_underlying_erc20_asset() {
+    let tickets_handler = setup_dispatcher();
+    assert_eq!(tickets_handler.underlying_erc20_asset(), ETH_ADDRS());
+}
+
+#[test]
+fn test_ticket_value() {
+    let tickets_handler = setup_dispatcher();
+    assert_eq!(tickets_handler.ticket_value(), TEN_WITH_6_DECIMALS);
+}
+
+#[test]
+fn test_circulating_supply() {
+    let tickets_handler = setup_dispatcher();
+    assert_eq!(tickets_handler.circulating_supply(), 3);
+}
+
+#[test]
+fn test_total_tickets_emitted() {
+    let tickets_handler = setup_dispatcher();
+    assert_eq!(tickets_handler.total_tickets_emitted(), 3);
+}
+
+// =================================================================
+
+// SETTERS (External/Public Functions)
+
+//
+// Functions from OZ's ERC721Upgradeable Preset
+//
 
 //
 // approve
@@ -1161,12 +1299,20 @@ fn test_state_persists_after_upgrade() {
     assert_eq!(snake_balance, camel_balance);
 }
 
+
+//!
+//! Test TicketsHandlerContract external functions (TicketsHandlerImpl of ITicketsHandlerTrait)
+//!
+//! => See tests/integration_tests/test_tickets_v03_externals.cairo
+//!
+
+
 //
 // Helpers
 //
 
 fn assert_state_before_transfer(
-    dispatcher: ERC721UpgradeableABIDispatcher,
+    dispatcher: TicketsHandlerABIDispatcher,
     owner: ContractAddress,
     recipient: ContractAddress,
     token_id: u256
@@ -1177,7 +1323,7 @@ fn assert_state_before_transfer(
 }
 
 fn assert_state_after_transfer(
-    dispatcher: ERC721UpgradeableABIDispatcher,
+    dispatcher: TicketsHandlerABIDispatcher,
     owner: ContractAddress,
     recipient: ContractAddress,
     token_id: u256
@@ -1192,7 +1338,7 @@ fn assert_state_after_transfer(
 }
 
 fn assert_state_transfer_to_self(
-    dispatcher: ERC721UpgradeableABIDispatcher,
+    dispatcher: TicketsHandlerABIDispatcher,
     target: ContractAddress,
     token_id: u256,
     token_balance: u256
@@ -1200,3 +1346,4 @@ fn assert_state_transfer_to_self(
     assert_eq!(dispatcher.owner_of(token_id), target);
     assert_eq!(dispatcher.balance_of(target), token_balance);
 }
+
