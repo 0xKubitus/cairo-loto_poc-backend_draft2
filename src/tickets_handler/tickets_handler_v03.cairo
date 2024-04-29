@@ -10,8 +10,8 @@
 /// https://wizard.openzeppelin.com/cairo
 #[starknet::contract]
 mod TicketsHandlerContract {
-    use cairo_loto_poc::components::cairo_loto_ticket::{CairoLotoTicketComponent, ICairoLotoTicket};
-    use cairo_loto_poc::components::cairo_loto_ticket::CairoLotoTicketComponent::TicketInternalTrait;
+    use cairo_loto_poc::tickets_handler::components::cairo_loto_ticket::{CairoLotoTicketComponent, ICairoLotoTicket};
+    use cairo_loto_poc::tickets_handler::components::cairo_loto_ticket::CairoLotoTicketComponent::TicketInternalTrait;
     use openzeppelin::access::ownable::ownable::OwnableComponent::InternalTrait;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::introspection::src5::SRC5Component;

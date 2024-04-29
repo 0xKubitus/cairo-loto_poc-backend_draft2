@@ -1,8 +1,8 @@
 // Test the component's external/public functions via deployment of a Mock contract.
 //! (This method does not seem to support testing of internal/public functions)
 
-use cairo_loto_poc::components::cairo_loto_ticket::CairoLotoTicketComponent::TicketInternalTrait;
-use cairo_loto_poc::components::cairo_loto_ticket::{
+use cairo_loto_poc::tickets_handler::components::cairo_loto_ticket::CairoLotoTicketComponent::TicketInternalTrait;
+use cairo_loto_poc::tickets_handler::components::cairo_loto_ticket::{
     ICairoLotoTicket, ICairoLotoTicketDispatcher, ICairoLotoTicketDispatcherTrait,
 };
 use cairo_loto_poc::testing_utils::mocks::cairo_loto_ticket_mock::CairoLotoTicketMock;
@@ -84,8 +84,8 @@ fn total_tickets_emitted() {
 // Test the component functionality without deploying the Mock contract.
 //! I THINK I AM OBLIGED TO USE THIS IN ORDER TO TEST INTERNAL/PRIVATE METHODS
 
-use cairo_loto_poc::components::cairo_loto_ticket::CairoLotoTicketComponent;
-use cairo_loto_poc::components::cairo_loto_ticket::CairoLotoTicketComponent::TicketInternalImpl;
+use cairo_loto_poc::tickets_handler::components::cairo_loto_ticket::CairoLotoTicketComponent;
+use cairo_loto_poc::tickets_handler::components::cairo_loto_ticket::CairoLotoTicketComponent::TicketInternalImpl;
 
 type TestingState = CairoLotoTicketComponent::ComponentState<CairoLotoTicketMock::ContractState>;
 

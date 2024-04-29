@@ -1,9 +1,9 @@
 use openzeppelin::introspection::interface::ISRC5_ID;
-use cairo_loto_poc::tickets_handler_v03::TicketsHandlerContract;
-use cairo_loto_poc::tickets_handler_v03::TicketsHandlerContract::{
+use cairo_loto_poc::tickets_handler::tickets_handler_v03::TicketsHandlerContract;
+use cairo_loto_poc::tickets_handler::tickets_handler_v03::TicketsHandlerContract::{
     PrivateImpl, TicketsHandlerImpl, ITicketsHandlerTrait
 };
-use cairo_loto_poc::interfaces::tickets_handler_v03::{
+use cairo_loto_poc::tickets_handler::interface::{
     TicketsHandlerABIDispatcher, TicketsHandlerABIDispatcherTrait,
 };
 use cairo_loto_poc::testing_utils::access::test_ownable::assert_event_ownership_transferred;

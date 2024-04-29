@@ -3,10 +3,10 @@
 //
 #[starknet::contract]
 pub mod CairoLotoTicketMock {
-    use cairo_loto_poc::components::cairo_loto_ticket::{
+    use cairo_loto_poc::tickets_handler::components::cairo_loto_ticket::{
         CairoLotoTicketComponent, ICairoLotoTicket,
     };
-    use cairo_loto_poc::components::cairo_loto_ticket::CairoLotoTicketComponent::TicketInternalTrait;
+    use cairo_loto_poc::tickets_handler::components::cairo_loto_ticket::CairoLotoTicketComponent::TicketInternalTrait;
     // use cairo_loto_poc::testing_utils;
     use cairo_loto_poc::testing_utils::constants::{TEN_WITH_6_DECIMALS, fake_ERC20_asset,};
     use starknet::ContractAddress;
