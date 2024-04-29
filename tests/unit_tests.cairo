@@ -1,3 +1,3 @@
 mod components;
+mod contracts;
 mod presets;
-mod tickets_handler_contracts;
