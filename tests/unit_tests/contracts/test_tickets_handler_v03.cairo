@@ -1,6 +1,6 @@
 use openzeppelin::introspection::interface::ISRC5_ID;
-use cairo_loto_poc::tickets_handler::tickets_handler_v03::TicketsHandlerContract;
-use cairo_loto_poc::tickets_handler::tickets_handler_v03::TicketsHandlerContract::{
+use cairo_loto_poc::tickets_handler::tickets_handler::TicketsHandlerContract;
+use cairo_loto_poc::tickets_handler::tickets_handler::TicketsHandlerContract::{
     PrivateImpl, TicketsHandlerImpl, ITicketsHandlerTrait
 };
 use cairo_loto_poc::tickets_handler::interface::{

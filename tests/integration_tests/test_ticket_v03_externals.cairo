@@ -1,5 +1,5 @@
-use cairo_loto_poc::tickets_handler::tickets_handler_v03::TicketsHandlerContract;
-use cairo_loto_poc::tickets_handler::tickets_handler_v03::TicketsHandlerContract::{PrivateImpl, TicketsHandlerImpl,};
+use cairo_loto_poc::tickets_handler::tickets_handler::TicketsHandlerContract;
+use cairo_loto_poc::tickets_handler::tickets_handler::TicketsHandlerContract::{PrivateImpl, TicketsHandlerImpl,};
 use cairo_loto_poc::tickets_handler::interface::{TicketsHandlerABIDispatcher, TicketsHandlerABIDispatcherTrait,};
 use cairo_loto_poc::testing_utils::mocks::erc20_mock::SnakeERC20Mock;
 use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
