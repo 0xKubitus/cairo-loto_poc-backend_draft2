@@ -141,6 +141,25 @@ fn setup_max() -> TicketsHandlerABIDispatcher {
 //! LET'S TRY TO MAKE IT AN INTEGRATION TEST WHICH ACTUALLY DEPLOYS EACH REQUIRED CONTRACT
 #[test]
 fn test__deposit_on_zkLend() {
+//step 1
+// deployer un ERC20Mock = fake USDC et donner la supply à "OWNER"
+
+//step 2
+// rediger et deployer un zkLendMarketMock avec une fonction "deposit()" qui fait:
+// `fake_USDC_dispatcher.transfer_from(caller, this_contract, ticket_value);`
+
+//step 3
+// deployer un 2eme ERC20Mock => fake zUSDC et donner la supply au zkLendMarketMock contrat
+
+//step 4
+//? OPTION --> (checker si je peux mettre "" comme parametre pour "token_ids" et ne pas avoir de batch-mint au deploiement)
+//! METHODE 1:
+// deployer tickets_handler
+// est-ce que je peux faire `tickets_handler._deposit_on_zkLend()` ? (=> ou est-ce que je peux  qu'utiliser les fonctions externes, comme je le crains ?)
+
+//! METHODE 2:
+// ne pas deployer tickets_handler mais essayer d'utiliser "set_contract_for_testing" avec tickets_handler pour tester la fonction interne fn _deposit_on_zkLend()
+
 
 
 
