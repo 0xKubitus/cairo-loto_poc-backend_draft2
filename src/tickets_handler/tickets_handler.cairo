@@ -251,7 +251,10 @@ mod TicketsHandlerContract {
             // Step 1: allow "zkLend Market" contract to
             // spend given amount of the `underlying_asset` from this contract
             let underlying_asset: ContractAddress = self.ticket.underlying_asset.read();
-            let zkLend_market: ContractAddress = MAINNET_ZKLEND_MARKET_ADRS.try_into().unwrap();
+            //!\
+            //! THIS IS WHAT NEEDS TO BE UPDATED!!!
+            //! let zkLend_market: ContractAddress = MAINNET_ZKLEND_MARKET_ADRS.try_into().unwrap();
+            //!\
             let erc20_dispatcher = IERC20Dispatcher { contract_address: underlying_asset };
             erc20_dispatcher.approve(zkLend_market, amount);
 

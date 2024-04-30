@@ -184,17 +184,18 @@ fn test__deposit_on_zkLend() {
 
     // utiliser "set_contract_for_testing" avec tickets_handler pour tester la fonction interne `fn _deposit_on_zkLend()`
     let mut state = TicketsHandlerContract::contract_state_for_testing();
+    //! AJOUTER L'ADDRESSE DU CONTRAT ZKLEND MARKET DANS L'INITIALIZER!!! ()
     state.ticket.initializer(underlying_erc20_addrs, TEN_WITH_6_DECIMALS);
     
-    //! noter le montant des depots de tickets_handler sur zklend market avant le depot
+    // noter le montant des depots de tickets_handler sur zklend market avant le depot
     let deposit_value_before = zkLendMarketMock_dispatcher.get_deposit_value_of(tickets_handler_addrs);
     
-    //! effectuer le depot sur zklend_market avec la fonction privée à tester
+    // effectuer le depot sur zklend_market avec la fonction privée à tester
     state._deposit_on_zkLend(TEN_WITH_6_DECIMALS);
 
-    //! verifier que desormais tickets_handler ne possede plus aucun token_A
+    // verifier que desormais tickets_handler ne possede plus aucun token_A
 
-    //! verifier que desormais tickets_handler possede "TEN_WITH_6_DECIMALS" token_B
+    // verifier que desormais tickets_handler possede "TEN_WITH_6_DECIMALS" token_B
 
     //! verifier que desormais zkLendMarketMock ne possede plus aucun token_B
 
