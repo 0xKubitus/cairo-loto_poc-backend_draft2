@@ -138,7 +138,7 @@ fn test_constructor() {
     // Check token balance and owner
     let mut tokens = array![TOKEN_1, TOKEN_2, TOKEN_3];
     assert_eq!(dispatcher.balance_of(OWNER()), TOKENS_LEN);
-    
+
     loop {
         let token = tokens.pop_front().unwrap();
         if tokens.len() == 0 {

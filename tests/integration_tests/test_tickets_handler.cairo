@@ -1,10 +1,22 @@
+use cairo_loto_poc::tickets_handler::components::cairo_loto_ticket::CairoLotoTicketComponent::TicketInternalTrait;
 use cairo_loto_poc::tickets_handler::tickets_handler::TicketsHandlerContract;
-use cairo_loto_poc::tickets_handler::tickets_handler::TicketsHandlerContract::{PrivateImpl, TicketsHandlerImpl,};
-use cairo_loto_poc::tickets_handler::interface::{TicketsHandlerABIDispatcher, TicketsHandlerABIDispatcherTrait,};
+use cairo_loto_poc::tickets_handler::tickets_handler::TicketsHandlerContract::{
+    PrivateImpl, TicketsHandlerImpl,
+};
+use cairo_loto_poc::tickets_handler::interface::{
+    TicketsHandlerABIDispatcher, TicketsHandlerABIDispatcherTrait,
+};
 use cairo_loto_poc::testing_utils::mocks::erc20_mock::SnakeERC20Mock;
+use cairo_loto_poc::testing_utils::mocks::zklend_market_mock::{
+    zkLendMarketMock, IzkLendMarketDispatcher,IzkLendMarketDispatcherTrait,
+};
 use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
-use cairo_loto_poc::testing_utils::constants::{TEN_WITH_6_DECIMALS, ETH_ADDRS, SOME_ERC20, COIN, fake_ERC20_asset,};
-use openzeppelin::tests::utils::constants::{ZERO, DATA, OWNER, SPENDER, RECIPIENT, OTHER, NAME, SYMBOL, BASE_URI,};
+use cairo_loto_poc::testing_utils::constants::{
+    TEN_WITH_6_DECIMALS, ETH_ADDRS, SOME_ERC20, COIN, fake_ERC20_asset,
+};
+use openzeppelin::tests::utils::constants::{
+    ZERO, DATA, OWNER, SPENDER, RECIPIENT, OTHER, NAME, SYMBOL, BASE_URI,
+};
 use openzeppelin::tests::utils;
 use openzeppelin::utils::serde::SerializedAppend;
 use starknet::testing;
@@ -39,7 +51,9 @@ fn light_setup_erc20_address(recipient: ContractAddress) -> ContractAddress {
     address
 }
 
-fn full_setup_erc20_address(name: ByteArray, symbol: ByteArray, recipient: ContractAddress) -> ContractAddress {
+fn full_setup_erc20_address(
+    name: ByteArray, symbol: ByteArray, recipient: ContractAddress
+) -> ContractAddress {
     let mut calldata = array![];
     calldata.append_serde(name);
     calldata.append_serde(symbol);
@@ -50,7 +64,9 @@ fn full_setup_erc20_address(name: ByteArray, symbol: ByteArray, recipient: Contr
     address
 }
 
-fn setup_erc20_dispatcher(token_address: ContractAddress, recipient: ContractAddress) -> IERC20Dispatcher {
+fn setup_erc20_dispatcher(
+    token_address: ContractAddress, recipient: ContractAddress
+) -> IERC20Dispatcher {
     let erc20_dispatcher = IERC20Dispatcher { contract_address: token_address };
 
     utils::drop_events(erc20_dispatcher.contract_address, TOKENS_LEN.try_into().unwrap() + 1);
@@ -78,9 +94,7 @@ fn ticket_dispatcher_with_event(erc20_addrs: ContractAddress) -> TicketsHandlerA
     TicketsHandlerABIDispatcher { contract_address: address }
 }
 
-fn ticket_dispatcher_with_event_bis(
-    batch_mint_IDs: Array<u256>, erc20_addrs: ContractAddress
-) -> TicketsHandlerABIDispatcher {
+fn ticket_dispatcher_with_event_bis(batch_mint_IDs: Array<u256>, erc20_addrs: ContractAddress) -> TicketsHandlerABIDispatcher {
     let mut calldata = array![];
 
     // Set caller as `OWNER`
@@ -131,7 +145,6 @@ fn setup_max() -> TicketsHandlerABIDispatcher {
 
 // #############################################################################
 
-
 //
 // TEST PRIVATE/INTERNAL FUNCTIONS
 //
@@ -141,34 +154,56 @@ fn setup_max() -> TicketsHandlerABIDispatcher {
 //! LET'S TRY TO MAKE IT AN INTEGRATION TEST WHICH ACTUALLY DEPLOYS EACH REQUIRED CONTRACT
 #[test]
 fn test__deposit_on_zkLend() {
-//step 1
-// deployer un ERC20Mock = fake USDC et donner la supply à "OWNER"
+    //step 1
+    // deployer un ERC20Mock = "token A" et donner la supply à "OWNER"
+    let underlying_erc20_addrs = full_setup_erc20_address("USDC contract", "USDC", OWNER());
+    let token_A_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs, OWNER());
+    // verifier deploiement
+    let owner_tokenA_balance_before = token_A_dispatcher.balance_of(OWNER());
+    assert_eq!(owner_tokenA_balance_before, TEN_WITH_6_DECIMALS);
 
-//step 2
-// rediger et deployer un zkLendMarketMock avec une fonction "deposit()" qui fait:
-// `fake_USDC_dispatcher.transfer_from(caller, this_contract, ticket_value);`
+    //step 2
+    // deployer un zkLendMarketMock avec une fonction "deposit()"
+    let calldata: Array<felt252> = array![];
+    let zklend_market_addrs = utils::deploy(zkLendMarketMock::TEST_CLASS_HASH, calldata);
+    let zkLendMarketMock_dispatcher = IzkLendMarketDispatcher { contract_address: zklend_market_addrs };
 
-//step 3
-// deployer un 2eme ERC20Mock => fake zUSDC et donner la supply au zkLendMarketMock contrat
+    //step 3
+    // deployer un 2eme ERC20Mock => fake zUSDC et donner la supply au zkLendMarketMock contrat
+    let zklend_PoD_token_addrs = full_setup_erc20_address( "zkLend USDC proof of deposit", "zUSDC", zklend_market_addrs );
+    let token_B_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs, OWNER());
 
-//step 4
-//? OPTION --> (checker si je peux mettre "" comme parametre pour "token_ids" et ne pas avoir de batch-mint au deploiement)
-//! METHODE 1:
-// deployer tickets_handler
-// est-ce que je peux faire `tickets_handler._deposit_on_zkLend()` ? (=> ou est-ce que je peux  qu'utiliser les fonctions externes, comme je le crains ?)
+    //step 4
+    // deployer tickets_handler
+    let batch_mint_IDs: Array<u256> = array![]; //? OPTION --> (checker si je peux faire en sorte de ne pas avoir de batch-mint au deploiement)
+    let tickets_handler_dispatcher = ticket_dispatcher_with_event_bis(batch_mint_IDs, underlying_erc20_addrs);
+    let tickets_handler_addrs = tickets_handler_dispatcher.contract_address;
 
-//! METHODE 2:
-// ne pas deployer tickets_handler mais essayer d'utiliser "set_contract_for_testing" avec tickets_handler pour tester la fonction interne fn _deposit_on_zkLend()
+    //? NOTE FOR SELF: I CANNOT USE THE BELOW LINE (PRIVATE FUNCTIONS SEEM NOT TO BE ACCESSIBLE THIS WAY)
+    //? tickets_handler_dispatcher._deposit_on_zkLend(underlying_erc20_addrs, TEN_WITH_6_DECIMALS); // => "Method `_deposit_on_zkLend` could not be called on type `cairo_loto_poc::tickets_handler::interface::TicketsHandlerABIDispatcher`".
 
+    // utiliser "set_contract_for_testing" avec tickets_handler pour tester la fonction interne `fn _deposit_on_zkLend()`
+    let mut state = TicketsHandlerContract::contract_state_for_testing();
+    state.ticket.initializer(underlying_erc20_addrs, TEN_WITH_6_DECIMALS);
+    
+    //! noter le montant des depots de tickets_handler sur zklend market avant le depot
+    let deposit_value_before = zkLendMarketMock_dispatcher.get_deposit_value_of(tickets_handler_addrs);
+    
+    //! effectuer le depot sur zklend_market avec la fonction privée à tester
+    state._deposit_on_zkLend(TEN_WITH_6_DECIMALS);
 
+    //! verifier que desormais tickets_handler ne possede plus aucun token_A
 
+    //! verifier que desormais tickets_handler possede "TEN_WITH_6_DECIMALS" token_B
 
+    //! verifier que desormais zkLendMarketMock ne possede plus aucun token_B
+
+    //! verifier que desormais zkLendMarketMock possede "TEN_WITH_6_DECIMALS" token_A
 
 
 
 }
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 
 //
 // Testing `tickets_handler_v03::TicketsHandlerImpl of ITicketsHandlerTrait` external/public functions
@@ -180,7 +215,6 @@ fn test_mint() {
     let underlying_erc20_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs, OWNER());
     // NOTE FOR SELF: below line also works (".contract_address")
     // let underlying_erc20_addrs = underlying_erc20_dispatcher.contract_address;
-
 
     let tickets_handler_dispatcher = setup_ticket_dispatcher(underlying_erc20_addrs);
     let tickets_handler_addrs = tickets_handler_dispatcher.contract_address;
@@ -215,11 +249,8 @@ fn test_try_mint_11th_ticket() {
     let underlying_erc20_addrs = light_setup_erc20_address(OWNER());
     let underlying_erc20_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs, OWNER());
 
-
     let batch_mint_IDs: Array<u256> = array![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-    let tickets_handler_dispatcher = ticket_dispatcher_with_event_bis(
-        batch_mint_IDs, underlying_erc20_addrs
-    );
+    let tickets_handler_dispatcher = ticket_dispatcher_with_event_bis(batch_mint_IDs, underlying_erc20_addrs);
 
     let tickets_handler_addrs = tickets_handler_dispatcher.contract_address;
     let amount = tickets_handler_dispatcher.ticket_value();
@@ -254,7 +285,6 @@ fn test_try_mint_with_smaller_allowance() {
     let underlying_erc20_addrs = light_setup_erc20_address(OWNER());
     let underlying_erc20_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs, OWNER());
 
-
     let batch_mint_IDs: Array<u256> = array![1, 2, 3,];
     let tickets_handler_dispatcher = ticket_dispatcher_with_event_bis(
         batch_mint_IDs, underlying_erc20_addrs
@@ -275,7 +305,6 @@ fn test_try_mint_with_smaller_allowance() {
 fn test_mint_and_burn() {
     let underlying_erc20_addrs = light_setup_erc20_address(OWNER());
     let underlying_erc20_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs, OWNER());
-
 
     let tickets_handler_dispatcher = setup_ticket_dispatcher(underlying_erc20_addrs);
     let tickets_handler_addrs = tickets_handler_dispatcher.contract_address;
@@ -309,7 +338,6 @@ fn test_try_burn_wrong_ticket() {
     let underlying_erc20_addrs = light_setup_erc20_address(OWNER());
     let underlying_erc20_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs, OWNER());
 
-    
     let tickets_handler_dispatcher = setup_ticket_dispatcher(underlying_erc20_addrs);
     let tickets_handler_addrs = tickets_handler_dispatcher.contract_address;
     let amount = tickets_handler_dispatcher.ticket_value();
@@ -335,7 +363,6 @@ fn test_try_burn_not_owner() {
     // Deploy an ERC20 contract that transfers the initial supply to "OTHER"
     let underlying_erc20_addrs = light_setup_erc20_address(OTHER());
     let underlying_erc20_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs, OTHER());
-
 
     // Deploy TicketsHandlerContract with ERC20 as the `underlying_asset` and mint 1 ticket to "OWNER"
     let batch_mint_IDs: Array<u256> = array![1, 2, 3];

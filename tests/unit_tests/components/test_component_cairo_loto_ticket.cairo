@@ -8,9 +8,7 @@ use cairo_loto_poc::tickets_handler::components::cairo_loto_ticket::{
 use cairo_loto_poc::testing_utils::mocks::cairo_loto_ticket_mock::CairoLotoTicketMock;
 use cairo_loto_poc::testing_utils;
 use cairo_loto_poc::testing_utils::{SerializedAppend,};
-use cairo_loto_poc::testing_utils::constants::{
-    TEN_WITH_6_DECIMALS, ETH_ADDRS, fake_ERC20_asset,
-};
+use cairo_loto_poc::testing_utils::constants::{TEN_WITH_6_DECIMALS, ETH_ADDRS, fake_ERC20_asset,};
 use openzeppelin::tests::utils::constants::{OWNER, OTHER,};
 use starknet::{ContractAddress, SyscallResultTrait,};
 use starknet::testing;

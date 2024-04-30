@@ -9,7 +9,6 @@
 /// For more complex or custom contracts, use Wizard for Cairo
 /// https://wizard.openzeppelin.com/cairo
 
-
 use starknet::ContractAddress;
 
 #[starknet::interface]
@@ -21,7 +20,9 @@ trait IzkLendMarket<TState> {
 
 #[starknet::contract]
 mod TicketsHandlerContract {
-    use cairo_loto_poc::tickets_handler::components::cairo_loto_ticket::{CairoLotoTicketComponent, ICairoLotoTicket};
+    use cairo_loto_poc::tickets_handler::components::cairo_loto_ticket::{
+        CairoLotoTicketComponent, ICairoLotoTicket
+    };
     use cairo_loto_poc::tickets_handler::components::cairo_loto_ticket::CairoLotoTicketComponent::TicketInternalTrait;
     use openzeppelin::access::ownable::ownable::OwnableComponent::InternalTrait;
     use openzeppelin::access::ownable::OwnableComponent;
@@ -37,7 +38,8 @@ mod TicketsHandlerContract {
     use core::traits::{Into, TryInto};
 
 
-    const MAINNET_ZKLEND_MARKET_ADRS: felt252 = 0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05;    
+    const MAINNET_ZKLEND_MARKET_ADRS: felt252 =
+        0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05;
 
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -139,24 +141,18 @@ mod TicketsHandlerContract {
             IERC20Dispatcher { contract_address: underlying_erc20 }
                 .transfer_from(user, ticket_handler, ticket_value);
 
-
-
             // TODO: Implementing yield-generation => ERC20 deposit into zkLend's vault
             //! Step 1:
             //! Create a private function for depositing a given
             //! erc20 "asset" and "amount".
             //! -> implement unit test of this private function
 
-
             //! Step 2:
             // use the newly created private function to deposit
             // `ticket_value` into zkLend's `underlying asset` vault
-            
 
             //! Step 3:
             // Update tests of this public function 
-
-
 
             // Define next ticket's `token_id`
             let token_id = self.ticket.total_supply.read() + 1;
@@ -172,16 +168,12 @@ mod TicketsHandlerContract {
             //! Create a private function withdrawing a given erc20 "asset" and "amount".
             //! => implement unit test of this private function
 
-
             //! Step 2:
             // use the newly created private function to deposit
             // `ticket_value` into zkLend's `underlying asset` vault
-            
 
             //! Step 3:
             // Update tests of this public function 
-
-
 
             // Destroy ticket
             self._burn(token_id);
@@ -189,8 +181,8 @@ mod TicketsHandlerContract {
             IERC20Dispatcher { contract_address: self.ticket.underlying_asset.read() }
                 .transfer(get_caller_address(), self.ticket.value.read());
         }
-        //! Step 4: CONVERT THE ABOVE FUNCTION SO THAT THE USER IS NOT NECESSARILY THE CALLER
-        //!   -->   fn burn(ref self: ContractState, token_id: u256,) {...}
+    //! Step 4: CONVERT THE ABOVE FUNCTION SO THAT THE USER IS NOT NECESSARILY THE CALLER
+    //!   -->   fn burn(ref self: ContractState, token_id: u256,) {...}
     }
 
 
@@ -245,7 +237,7 @@ mod TicketsHandlerContract {
             // Ensure caller is the ticket's owner
             let caller = get_caller_address();
             let ticket_owner = self.erc721._owner_of(token_id);
-            assert_eq!(caller, ticket_owner);
+            assert(caller == ticket_owner, 'caller must own the ticket');
 
             // Burn ticket + decrease current supply
             self.erc721._burn(token_id);
@@ -255,17 +247,19 @@ mod TicketsHandlerContract {
         /// Deposits given amount of `underlying_asset` from this contract into matching erc20 vault from zkLend
         fn _deposit_on_zkLend(ref self: ContractState, amount: u256) {
             ////////////////////////////////////////////////////////////////////
-            //! TODO: TEST DEPOSIT TO ZKLEND MECHANISM !!!
+            // TODO: TEST DEPOSIT TO ZKLEND MECHANISM !!!
             // Step 1: allow "zkLend Market" contract to
             // spend given amount of the `underlying_asset` from this contract
             let underlying_asset: ContractAddress = self.ticket.underlying_asset.read();
             let zkLend_market: ContractAddress = MAINNET_ZKLEND_MARKET_ADRS.try_into().unwrap();
-            let erc20_dispatcher = IERC20Dispatcher{ contract_address: underlying_asset };
+            let erc20_dispatcher = IERC20Dispatcher { contract_address: underlying_asset };
             erc20_dispatcher.approve(zkLend_market, amount);
 
             // Step 2: Make a deposit of the given amount
             // of `underlying_asset` into zkLend Market contract
-            let felt_amount: felt252 = amount.try_into().unwrap(); // <- zkLend's contract uses felt252 (not u256) to manage amounts.
+            let felt_amount: felt252 = amount
+                .try_into()
+                .unwrap(); // <- zkLend's contract uses felt252 (not u256) to manage amounts.
 
             IzkLendMarketDispatcher { contract_address: zkLend_market }.deposit(underlying_asset, felt_amount);
 
@@ -274,13 +268,10 @@ mod TicketsHandlerContract {
             // by lending the deposited ETH and borrowing a fraction
             // of the deposit to lend it again -> TO BE IMPLEMENTED LATER ON
             // zkLend_market_dispatcher.borrow(underlying_asset, felt_borrow_amount);
-            ////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////
         }
 
         /// Withdraws given amount of `underlying_asset` from this contract into matching erc20 vault from zkLend
-        fn _withdraw_from_zkLend(ref self: ContractState, amount: u256) {
-
-        }
+        fn _withdraw_from_zkLend(ref self: ContractState, amount: u256) {}
     }
-
 }

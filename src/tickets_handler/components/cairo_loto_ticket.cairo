@@ -10,11 +10,10 @@ pub trait ICairoLotoTicket<TContractState> {
 
 #[starknet::component]
 pub mod CairoLotoTicketComponent {
-    // use poc_tickets_component::interfaces::cairo_loto_ticket;
     use super::ICairoLotoTicket;
     use starknet::ContractAddress;
-    // use starknet::get_caller_address;
 
+    
     #[storage]
     struct Storage {
         underlying_asset: ContractAddress,

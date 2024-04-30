@@ -128,10 +128,10 @@ fn setup_camel_account() -> ContractAddress {
 fn test__mint_assets() {
     let mut state = TicketsHandlerContract::contract_state_for_testing();
     let mut token_ids = array![TOKEN_1, TOKEN_2, TOKEN_3].span();
-    
+
     state._mint_assets(OWNER(), token_ids);
     assert_eq!(state.erc721.balance_of(OWNER()), TOKENS_LEN);
-    
+
     loop {
         if token_ids.len() == 0 {
             break;
@@ -145,10 +145,10 @@ fn test__mint_assets() {
 fn test__mint() {
     let mut state = TicketsHandlerContract::contract_state_for_testing();
     testing::set_caller_address(OWNER()); //? is this necessary?
-    
+
     state._mint(OWNER(), 1);
     state._mint(OWNER(), 2);
-    
+
     assert_eq!(state.erc721.balance_of(OWNER()), 2);
 }
 
@@ -157,10 +157,10 @@ fn test__mint() {
 fn test__mint_11th_ticket() {
     let mut state = TicketsHandlerContract::contract_state_for_testing();
     testing::set_caller_address(OWNER());
-    
+
     let calldata: Array<u256> = array![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     state._mint_assets(OWNER(), calldata.span());
-    
+
     // TEST PANICS HERE BECAUSE TICKET MAX LIMIT PER ACCOUNT = 10
     state._mint(OWNER(), 11);
 }
@@ -168,12 +168,12 @@ fn test__mint_11th_ticket() {
 #[test]
 fn test__burn() {
     let mut state = TicketsHandlerContract::contract_state_for_testing();
-    
+
     testing::set_caller_address(OWNER());
-    
+
     state._mint(OWNER(), 1);
     assert_eq!(state.erc721.balance_of(OWNER()), 1);
-    
+
     state._burn(1);
     assert_eq!(state.erc721.balance_of(OWNER()), 0);
 }
@@ -185,7 +185,7 @@ fn test__burn_not_ticket_owner() {
     let mut token_ids = array![TOKEN_1, TOKEN_2, TOKEN_3].span();
     state._mint_assets(OWNER(), token_ids);
     assert_eq!(state.erc721.balance_of(OWNER()), 3);
-    
+
     // TEST PANICS BECAUSE "OTHER()" IS NOT THE OWNER OF THE TICKET
     testing::set_caller_address(OTHER());
     state._burn(1);
@@ -194,8 +194,8 @@ fn test__burn_not_ticket_owner() {
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // #[test]
 // fn test__deposit_on_zkLend() {
-    //! I DID NOT MANAGE TO TEST THIS FUNCTION USING THE "contract_state_for_testing()" METHOD,
-    //! LET'S TRY TO MAKE IT AN INTEGRATION TEST WHICH ACTUALLY DEPLOYS EACH REQUIRED CONTRACT
+//! I DID NOT MANAGE TO TEST THIS FUNCTION USING THE "contract_state_for_testing()" METHOD,
+//! LET'S TRY TO MAKE IT AN INTEGRATION TEST WHICH ACTUALLY DEPLOYS EACH REQUIRED CONTRACT
 //     let mut erc20_contract_state = SnakeERC20Mock::contract_state_for_testing();
 //     let mut tickets_handler_state = TicketsHandlerContract::contract_state_for_testing();
 //     testing::set_contract_address();
@@ -206,7 +206,6 @@ fn test__burn_not_ticket_owner() {
 //
 // TEST EXTERNAL FUNCTIONS
 //
-
 
 //
 // constructor
@@ -225,10 +224,10 @@ fn test_constructor() {
         let id = interface_ids.pop_front().unwrap();
         if interface_ids.len() == 0 {
             break;
-        }    
+        }
         let supports_interface = dispatcher.supports_interface(id);
         assert!(supports_interface);
-    };    
+    };
 
     // Check token balance and owner
     let mut tokens = array![TOKEN_1, TOKEN_2, TOKEN_3];
@@ -238,11 +237,11 @@ fn test_constructor() {
         let token = tokens.pop_front().unwrap();
         if tokens.len() == 0 {
             break;
-        }    
+        }
         let current_owner = dispatcher.owner_of(token);
         assert_eq!(current_owner, OWNER());
-    };    
-}    
+    };
+}
 
 #[test]
 fn test_constructor_events() {
@@ -256,10 +255,10 @@ fn test_constructor_events() {
             // Includes event queue check
             assert_only_event_transfer(dispatcher.contract_address, ZERO(), OWNER(), token);
             break;
-        }    
+        }
         assert_event_transfer(dispatcher.contract_address, ZERO(), OWNER(), token);
-    };    
-}    
+    };
+}
 
 //
 // Getters from ERC721 component
@@ -1318,7 +1317,6 @@ fn test_state_persists_after_upgrade() {
 //!
 //! => See tests/integration_tests/test_tickets_v03_externals.cairo
 //!
-
 
 //
 // Helpers
