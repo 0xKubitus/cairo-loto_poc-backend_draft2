@@ -1,4 +1,3 @@
-use openzeppelin::introspection::interface::ISRC5_ID;
 use cairo_loto_poc::tickets_handler::tickets_handler::TicketsHandlerContract;
 use cairo_loto_poc::tickets_handler::tickets_handler::TicketsHandlerContract::{
     PrivateImpl, TicketsHandlerImpl, ITicketsHandlerTrait
@@ -8,6 +7,7 @@ use cairo_loto_poc::tickets_handler::interface::{
 };
 use cairo_loto_poc::testing_utils::access::test_ownable::assert_event_ownership_transferred;
 use cairo_loto_poc::testing_utils::mocks::account_mocks::{DualCaseAccountMock, CamelAccountMock};
+use cairo_loto_poc::testing_utils::mocks::erc20_mock::SnakeERC20Mock;
 use cairo_loto_poc::testing_utils::mocks::erc721_mocks::SnakeERC721Mock;
 use cairo_loto_poc::testing_utils::mocks::erc721_receiver_mocks::{
     CamelERC721ReceiverMock, SnakeERC721ReceiverMock
@@ -31,6 +31,7 @@ use openzeppelin::token::erc721::interface::{
 };
 use openzeppelin::token::erc721::interface::{IERC721Dispatcher, IERC721DispatcherTrait};
 use openzeppelin::token::erc721::interface::{IERC721_ID, IERC721_METADATA_ID};
+use openzeppelin::introspection::interface::ISRC5_ID;
 use openzeppelin::utils::serde::SerializedAppend;
 use starknet::testing;
 use starknet::{ContractAddress, ClassHash};
@@ -127,10 +128,10 @@ fn setup_camel_account() -> ContractAddress {
 fn test__mint_assets() {
     let mut state = TicketsHandlerContract::contract_state_for_testing();
     let mut token_ids = array![TOKEN_1, TOKEN_2, TOKEN_3].span();
-
+    
     state._mint_assets(OWNER(), token_ids);
     assert_eq!(state.erc721.balance_of(OWNER()), TOKENS_LEN);
-
+    
     loop {
         if token_ids.len() == 0 {
             break;
@@ -144,10 +145,10 @@ fn test__mint_assets() {
 fn test__mint() {
     let mut state = TicketsHandlerContract::contract_state_for_testing();
     testing::set_caller_address(OWNER()); //? is this necessary?
-
+    
     state._mint(OWNER(), 1);
     state._mint(OWNER(), 2);
-
+    
     assert_eq!(state.erc721.balance_of(OWNER()), 2);
 }
 
@@ -156,10 +157,10 @@ fn test__mint() {
 fn test__mint_11th_ticket() {
     let mut state = TicketsHandlerContract::contract_state_for_testing();
     testing::set_caller_address(OWNER());
-
+    
     let calldata: Array<u256> = array![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     state._mint_assets(OWNER(), calldata.span());
-
+    
     // TEST PANICS HERE BECAUSE TICKET MAX LIMIT PER ACCOUNT = 10
     state._mint(OWNER(), 11);
 }
@@ -167,9 +168,9 @@ fn test__mint_11th_ticket() {
 #[test]
 fn test__burn() {
     let mut state = TicketsHandlerContract::contract_state_for_testing();
-
+    
     testing::set_caller_address(OWNER());
-
+    
     state._mint(OWNER(), 1);
     assert_eq!(state.erc721.balance_of(OWNER()), 1);
     
@@ -189,6 +190,18 @@ fn test__burn_not_ticket_owner() {
     testing::set_caller_address(OTHER());
     state._burn(1);
 }
+
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// #[test]
+// fn test__deposit_on_zkLend() {
+    //! I DID NOT MANAGE TO TEST THIS FUNCTION USING THE "contract_state_for_testing()" METHOD,
+    //! LET'S TRY TO MAKE IT AN INTEGRATION TEST WHICH ACTUALLY DEPLOYS EACH REQUIRED CONTRACT
+//     let mut erc20_contract_state = SnakeERC20Mock::contract_state_for_testing();
+//     let mut tickets_handler_state = TicketsHandlerContract::contract_state_for_testing();
+//     testing::set_contract_address();
+//     (...)
+// }
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 //
 // TEST EXTERNAL FUNCTIONS

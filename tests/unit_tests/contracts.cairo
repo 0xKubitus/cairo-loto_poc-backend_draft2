@@ -1,1 +1,1 @@
-mod test_tickets_handler_v03;
+mod test_tickets_handler;
