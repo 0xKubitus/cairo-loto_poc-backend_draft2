@@ -8,10 +8,12 @@ trait TicketsHandlerABI<TState> {
     fn ticket_value(self: @TState) -> u256;
     fn circulating_supply(self: @TState) -> u256;
     fn total_tickets_emitted(self: @TState) -> u256;
+
+    // ITicketsHandlerTrait
+    fn get_zkLend_market_address(self: @TState) -> ContractAddress;
+    fn set_zkLend_market_address(ref self: TState, address: ContractAddress);
     fn mint(ref self: TState, to: ContractAddress);
     fn burn(ref self: TState, token_id: u256);
-    // fn free_mint(ref self: TState); // v0.2 function, TO BE DELETED
-    // fn basic_burn(ref self: TState, token_id: u256); // v0.2 function, TO BE DELETED
 
     // IERC721
     fn balance_of(self: @TState, account: ContractAddress) -> u256;

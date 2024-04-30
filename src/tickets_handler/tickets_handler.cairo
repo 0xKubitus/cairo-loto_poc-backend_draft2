@@ -70,6 +70,7 @@ mod TicketsHandlerContract {
 
     #[storage]
     struct Storage {
+        zkLend_mkt_addrs: ContractAddress,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
@@ -109,6 +110,7 @@ mod TicketsHandlerContract {
         owner: ContractAddress,
         underlying_erc20: ContractAddress,
         ticket_value: u256,
+        zkLend_market: ContractAddress,
     ) {
         /// Sets the token `name` and `symbol` and sets the base URI.
         self.erc721.initializer(name, symbol, base_uri);
@@ -118,6 +120,8 @@ mod TicketsHandlerContract {
         self.ownable.initializer(owner);
         /// Mints the `token_ids` tokens to `recipient`
         self._mint_assets(recipient, token_ids);
+        /// Keep in Storage the address of zkLend's Market contract
+        self.zkLend_mkt_addrs.write(zkLend_market);
     }
 
     //
@@ -128,7 +132,7 @@ mod TicketsHandlerContract {
     impl TicketsHandlerImpl of ITicketsHandlerTrait {
         #[external(v0)]
         /// To use this function, the `user` must have `approved`
-        /// this contract to use/spend the `ticket_value` of `underlying asset`.
+        /// this contract to use/spend `ticket_value` of `underlying asset`.
         /// The user's deposit is directly sent for yield generation into matching zkLend vault.
         fn mint(ref self: ContractState, user: ContractAddress,) {
             let ticket_handler = get_contract_address();
@@ -181,8 +185,19 @@ mod TicketsHandlerContract {
             IERC20Dispatcher { contract_address: self.ticket.underlying_asset.read() }
                 .transfer(get_caller_address(), self.ticket.value.read());
         }
-    //! Step 4: CONVERT THE ABOVE FUNCTION SO THAT THE USER IS NOT NECESSARILY THE CALLER
-    //!   -->   fn burn(ref self: ContractState, token_id: u256,) {...}
+        //! Step 4: CONVERT THE ABOVE FUNCTION SO THAT THE USER IS NOT NECESSARILY THE CALLER
+        //!   -->   fn burn(ref self: ContractState, token_id: u256,) {...}
+
+        #[external(v0)]
+        fn get_zkLend_market_address(self: @ContractState) -> ContractAddress {
+            self.zkLend_mkt_addrs.read()
+        }
+
+        #[external(v0)]
+        fn set_zkLend_market_address(ref self: ContractState, address: ContractAddress) {
+            self.ownable.assert_only_owner();
+            self.zkLend_mkt_addrs.write(address);
+        }
     }
 
 
@@ -201,6 +216,10 @@ mod TicketsHandlerContract {
     //
     #[generate_trait]
     impl PrivateImpl of PrivateTrait {
+        // fn _initializer(ref self: ContractState, zkLend_market_addrs: ContractAddress,) {
+        //     self.zkLend_mkt_addrs.write(zkLend_market_addrs);
+        // } //? not really useful until there are several storage values to set at deployment time
+
         /// Mints `token_ids` to `recipient`.
         fn _mint_assets(
             ref self: ContractState, recipient: ContractAddress, mut token_ids: Span<u256>
