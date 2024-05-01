@@ -2,9 +2,11 @@ use cairo_loto_poc::tickets_handler::tickets_handler::TicketsHandlerContract;
 use cairo_loto_poc::tickets_handler::tickets_handler::TicketsHandlerContract::{
     PrivateImpl, TicketsHandlerImpl, ITicketsHandlerTrait
 };
+use cairo_loto_poc::tickets_handler::components::cairo_loto_ticket::CairoLotoTicketComponent::TicketInternalTrait;
 use cairo_loto_poc::tickets_handler::interface::{
     TicketsHandlerABIDispatcher, TicketsHandlerABIDispatcherTrait,
 };
+use cairo_loto_poc::testing_utils;
 use cairo_loto_poc::testing_utils::access::test_ownable::assert_event_ownership_transferred;
 use cairo_loto_poc::testing_utils::mocks::account_mocks::{DualCaseAccountMock, CamelAccountMock};
 use cairo_loto_poc::testing_utils::mocks::erc20_mock::SnakeERC20Mock;
@@ -13,16 +15,14 @@ use cairo_loto_poc::testing_utils::mocks::erc721_receiver_mocks::{
     CamelERC721ReceiverMock, SnakeERC721ReceiverMock
 };
 use cairo_loto_poc::testing_utils::mocks::non_implementing_mock::NonImplementingMock;
+use cairo_loto_poc::testing_utils::mocks::zklend_market_mock::{
+    zkLendMarketMock, IzkLendMarketDispatcher, IzkLendMarketDispatcherTrait,
+};
 use cairo_loto_poc::testing_utils::token::test_erc721::{
     assert_event_transfer, assert_only_event_transfer, assert_event_approval,
     assert_event_approval_for_all
 };
 use cairo_loto_poc::testing_utils::upgrades::test_upgradeable::assert_only_event_upgraded;
-use openzeppelin::tests::utils::constants::{
-    ZERO, DATA, OWNER, SPENDER, RECIPIENT, OTHER, OPERATOR, CLASS_HASH_ZERO, PUBKEY, NAME, SYMBOL,
-    BASE_URI
-};
-use cairo_loto_poc::testing_utils;
 use cairo_loto_poc::testing_utils::constants::{
     TOKEN_1, TOKEN_2, TOKEN_3, TOKENS_LEN, NONEXISTENT, TEN_WITH_6_DECIMALS, fake_ERC20_asset,
     ETH_ADDRS, ZKLEND_MKT_ADDRS,
@@ -31,13 +31,19 @@ use cairo_loto_poc::testing_utils::constants::{
 use openzeppelin::tests::utils;
 use openzeppelin::token::erc721::ERC721Component::ERC721Impl;
 use openzeppelin::token::erc721::ERC721Component;
-use openzeppelin::token::erc721::interface::{
-    IERC721CamelOnlyDispatcher, IERC721CamelOnlyDispatcherTrait
-};
 use openzeppelin::token::erc721::interface::{IERC721Dispatcher, IERC721DispatcherTrait};
 use openzeppelin::token::erc721::interface::{IERC721_ID, IERC721_METADATA_ID};
 use openzeppelin::introspection::interface::ISRC5_ID;
 use openzeppelin::utils::serde::SerializedAppend;
+use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
+use openzeppelin::token::erc721::interface::{
+    IERC721CamelOnlyDispatcher, IERC721CamelOnlyDispatcherTrait
+};
+use openzeppelin::tests::utils::constants::{
+    ZERO, DATA, OWNER, SPENDER, RECIPIENT, OTHER, OPERATOR, CLASS_HASH_ZERO, PUBKEY, NAME, SYMBOL,
+    BASE_URI
+};
+
 use starknet::testing;
 use starknet::{ContractAddress, ClassHash};
 
@@ -122,52 +128,54 @@ fn test__burn_not_ticket_owner() {
 
 // TODO: MAKE THIS TEST PASS SUCCESSFULLY
 #[test]
-fn test__deposit_on_zkLend() { // //step 1
-// // deployer un ERC20Mock = "token A" et donner la supply à "OWNER"
-// let underlying_erc20_addrs = full_setup_erc20_address("USDC contract", "USDC", OWNER());
-// let token_A_dispatcher = testing_utils::setup_erc20_dispatcher(underlying_erc20_addrs, OWNER());
-// // verifier deploiement
-// let owner_tokenA_balance_before = token_A_dispatcher.balance_of(OWNER());
-// assert_eq!(owner_tokenA_balance_before, TEN_WITH_6_DECIMALS);
+fn test__deposit_on_zkLend() {
+     //step 1
+// deployer un ERC20Mock = "token A" et donner la supply à "OWNER"
+let underlying_erc20_addrs = testing_utils::full_setup_erc20_address("USDC contract", "USDC", OWNER());
+let token_A_dispatcher = testing_utils::setup_erc20_dispatcher(underlying_erc20_addrs, OWNER());
+// verifier deploiement
+let owner_tokenA_balance_before = token_A_dispatcher.balance_of(OWNER());
+assert_eq!(owner_tokenA_balance_before, TEN_WITH_6_DECIMALS);
 
-// //step 2
-// // deployer un zkLendMarketMock avec une fonction "deposit()"
-// let calldata: Array<felt252> = array![];
-// let zklend_market_addrs = utils::deploy(zkLendMarketMock::TEST_CLASS_HASH, calldata);
-// let zkLendMarketMock_dispatcher = IzkLendMarketDispatcher { contract_address: zklend_market_addrs };
+//step 2
+// deployer un zkLendMarketMock avec une fonction "deposit()"
+let calldata: Array<felt252> = array![];
+let zklend_market_addrs = utils::deploy(zkLendMarketMock::TEST_CLASS_HASH, calldata);
+let zkLendMarketMock_dispatcher = IzkLendMarketDispatcher { contract_address: zklend_market_addrs };
 
-// //step 3
-// // deployer un 2eme ERC20Mock => fake zUSDC et donner la supply au zkLendMarketMock contrat
-// let zklend_PoD_token_addrs = full_setup_erc20_address( "zkLend USDC proof of deposit", "zUSDC", zklend_market_addrs );
-// let token_B_dispatcher = testing_utils::setup_erc20_dispatcher(underlying_erc20_addrs, OWNER());
+//step 3
+// deployer un 2eme ERC20Mock => fake zUSDC et donner la supply au zkLendMarketMock contrat
+let zklend_PoD_token_addrs = testing_utils::full_setup_erc20_address( "zkLend USDC proof of deposit", "zUSDC", zklend_market_addrs );
+let token_B_dispatcher = testing_utils::setup_erc20_dispatcher(underlying_erc20_addrs, OWNER());
 
-// //step 4
-// // deployer tickets_handler
-// let batch_mint_IDs: Array<u256> = array![]; //? OPTION --> (checker si je peux faire en sorte de ne pas avoir de batch-mint au deploiement)
-// let tickets_handler_dispatcher = ticket_dispatcher_with_event_bis(batch_mint_IDs, underlying_erc20_addrs, zklend_market_addrs);
-// let tickets_handler_addrs = tickets_handler_dispatcher.contract_address;
+//step 4
+// deployer tickets_handler
+let batch_mint_IDs: Array<u256> = array![]; //? OPTION --> (checker si je peux faire en sorte de ne pas avoir de batch-mint au deploiement)
+let tickets_handler_dispatcher = testing_utils::ticket_dispatcher_with_event_bis(batch_mint_IDs, underlying_erc20_addrs, zklend_market_addrs);
+let tickets_handler_addrs = tickets_handler_dispatcher.contract_address;
 
-// //? NOTE FOR SELF: I CANNOT USE THE BELOW LINE (PRIVATE FUNCTIONS SEEM NOT TO BE ACCESSIBLE THIS WAY)
-// //? tickets_handler_dispatcher._deposit_on_zkLend(underlying_erc20_addrs, TEN_WITH_6_DECIMALS); // => "Method `_deposit_on_zkLend` could not be called on type `cairo_loto_poc::tickets_handler::interface::TicketsHandlerABIDispatcher`".
+//? NOTE FOR SELF: I CANNOT USE THE BELOW LINE (PRIVATE FUNCTIONS SEEM NOT TO BE ACCESSIBLE THIS WAY)
+//? tickets_handler_dispatcher._deposit_on_zkLend(underlying_erc20_addrs, TEN_WITH_6_DECIMALS); // => "Method `_deposit_on_zkLend` could not be called on type `cairo_loto_poc::tickets_handler::interface::TicketsHandlerABIDispatcher`".
 
-// // utiliser "set_contract_for_testing" avec tickets_handler pour tester la fonction interne `fn _deposit_on_zkLend()`
-// let mut state = TicketsHandlerContract::contract_state_for_testing();
-// //! AJOUTER L'ADDRESSE DU CONTRAT ZKLEND MARKET DANS UN 2ND INITIALIZER() CI-DESSOUS !!!
-// state.ticket.initializer(underlying_erc20_addrs, TEN_WITH_6_DECIMALS);
+// utiliser "set_contract_for_testing" avec tickets_handler pour tester la fonction interne `fn _deposit_on_zkLend()`
+let mut state = TicketsHandlerContract::contract_state_for_testing();
+//! AJOUTER L'ADDRESSE DU CONTRAT ZKLEND MARKET DANS UN 2ND INITIALIZER() CI-DESSOUS !!!
+state.ticket.initializer(underlying_erc20_addrs, TEN_WITH_6_DECIMALS);
 
-// // noter le montant des depots de tickets_handler sur zklend market avant le depot
-// let deposit_value_before = zkLendMarketMock_dispatcher.get_deposit_value_of(tickets_handler_addrs);
+// noter le montant des depots de tickets_handler sur zklend market avant le depot
+let deposit_value_before = zkLendMarketMock_dispatcher.get_deposit_value_of(tickets_handler_addrs);
 
-// // effectuer le depot sur zklend_market avec la fonction privée à tester
-// state._deposit_on_zkLend(TEN_WITH_6_DECIMALS);
+// effectuer le depot sur zklend_market avec la fonction privée à tester (nécessite d'"approve()" zklend_mkt au préalable)
 
-// // verifier que desormais tickets_handler ne possede plus aucun token_A
+state._deposit_on_zkLend(TEN_WITH_6_DECIMALS);
 
-// // verifier que desormais tickets_handler possede "TEN_WITH_6_DECIMALS" token_B
+// verifier que desormais tickets_handler ne possede plus aucun token_A
 
-// //! verifier que desormais zkLendMarketMock ne possede plus aucun token_B
+// verifier que desormais tickets_handler possede "TEN_WITH_6_DECIMALS" token_B
 
-// //! verifier que desormais zkLendMarketMock possede "TEN_WITH_6_DECIMALS" token_A
+//! verifier que desormais zkLendMarketMock ne possede plus aucun token_B
+
+//! verifier que desormais zkLendMarketMock possede "TEN_WITH_6_DECIMALS" token_A
 
 }
 

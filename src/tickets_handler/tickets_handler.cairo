@@ -218,9 +218,10 @@ mod TicketsHandlerContract {
     //
     #[generate_trait]
     impl PrivateImpl of PrivateTrait {
+        //? not really useful until there are several storage values to set at deployment time
         // fn _initializer(ref self: ContractState, zkLend_market_addrs: ContractAddress,) {
         //     self.zkLend_mkt_addrs.write(zkLend_market_addrs);
-        // } //? not really useful until there are several storage values to set at deployment time
+        // }
 
         /// Mints `token_ids` to `recipient`.
         fn _mint_assets(
@@ -276,7 +277,7 @@ mod TicketsHandlerContract {
                 .zkLend_mkt_addrs
                 .read(); //! to be turned into a private function (which will also need to be tested, for good measure)
 
-            let erc20_dispatcher = IERC20Dispatcher { contract_address: underlying_asset };
+            let erc20_dispatcher = IERC20Dispatcher{ contract_address: underlying_asset };
             erc20_dispatcher.approve(zkLend_market, amount);
 
             // Step 2: Make a deposit of the given amount
