@@ -31,6 +31,7 @@ mod TicketsHandlerContract {
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
     use openzeppelin::upgrades::UpgradeableComponent;
     use openzeppelin::upgrades::interface::IUpgradeable;
+    use super::IzkLendMarket;
     use super::{IzkLendMarketDispatcher, IzkLendMarketDispatcherTrait};
     use starknet::{ContractAddress, ClassHash};
     use starknet::{get_caller_address, get_contract_address};
@@ -38,8 +39,8 @@ mod TicketsHandlerContract {
     use core::traits::{Into, TryInto};
 
 
-    const MAINNET_ZKLEND_MARKET_ADRS: felt252 =
-        0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05;
+    // const MAINNET_ZKLEND_MARKET_ADRS: felt252 =
+    //     0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05;
 
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -121,7 +122,7 @@ mod TicketsHandlerContract {
         /// Mints the `token_ids` tokens to `recipient`
         self._mint_assets(recipient, token_ids);
         /// Keep in Storage the address of zkLend's Market contract
-        self.zkLend_mkt_addrs.write(zkLend_market);
+        self._initializer(zkLend_market);
     }
 
     //
@@ -218,10 +219,9 @@ mod TicketsHandlerContract {
     //
     #[generate_trait]
     impl PrivateImpl of PrivateTrait {
-        //? not really useful until there are several storage values to set at deployment time
-        // fn _initializer(ref self: ContractState, zkLend_market_addrs: ContractAddress,) {
-        //     self.zkLend_mkt_addrs.write(zkLend_market_addrs);
-        // }
+        fn _initializer(ref self: ContractState, zkLend_market_addrs: ContractAddress,) {
+            self.zkLend_mkt_addrs.write(zkLend_market_addrs);
+        }
 
         /// Mints `token_ids` to `recipient`.
         fn _mint_assets(
@@ -268,27 +268,35 @@ mod TicketsHandlerContract {
 
         /// Deposits given amount of `underlying_asset` from this contract into matching erc20 vault from zkLend
         fn _deposit_on_zkLend(ref self: ContractState, amount: u256) {
-            // TODO: TEST DEPOSIT TO ZKLEND MECHANISM!
+            // TODO: MAKE THIS FUNCTION'S TEST SUCCESSFULLY PASS!!! ("fn test__deposit_on_zkLend()")
             // Step 1: allow "zkLend Market" contract to
             // spend given amount of the `underlying_asset` from this contract
             let underlying_asset: ContractAddress = self.ticket.underlying_asset.read();
+            // let underlying_asset: ContractAddress = self.ticket.underlying_erc20_asset(); // using this instead doesn't solve the issue
+            
+            //! to be turned into a private function (which will also need to be tested, for good measure)
+            let zkLend_market: ContractAddress = self.zkLend_mkt_addrs.read();
+            // let zkLend_market: ContractAddress = self.get_zkLend_market_address(); // using this instead doesn't solve the issue
 
-            let zkLend_market: ContractAddress = self
-                .zkLend_mkt_addrs
-                .read(); //! to be turned into a private function (which will also need to be tested, for good measure)
-
-            let erc20_dispatcher = IERC20Dispatcher{ contract_address: underlying_asset };
+            let erc20_dispatcher = IERC20Dispatcher { contract_address: underlying_asset };
             erc20_dispatcher.approve(zkLend_market, amount);
+            assert(erc20_dispatcher.allowance(get_contract_address(), zkLend_market) == amount, 'approval error'); // not mandatory
 
-            // Step 2: Make a deposit of the given amount
-            // of `underlying_asset` into zkLend Market contract
-            let felt_amount: felt252 = amount
-                .try_into()
-                .unwrap(); // <- zkLend's contract uses felt252 (not u256) to manage amounts.
-            IzkLendMarketDispatcher { contract_address: zkLend_market }
-                .deposit(underlying_asset, felt_amount);
+        // Step 2: Make a deposit of the given amount
+        // of `underlying_asset` into zkLend Market contract
+        //? zkLend's contract uses felt252 (not u256) to manage amounts.
+        let felt_amount: felt252 = amount.try_into().unwrap(); 
+        let zkLend_dispatcher = IzkLendMarketDispatcher{ contract_address: zkLend_market };
+
+        // =================================================================
+        //!\
+        //TODO: Find out why below line triggers this error:
+        // "unit_tests::contracts::test_tickets_handler::test__deposit_on_zkLend - Panicked with 0x454e545259504f494e545f4e4f545f464f554e44 ('ENTRYPOINT_NOT_FOUND')"
+        zkLend_dispatcher.deposit(underlying_asset, felt_amount);
+        // =================================================================        
+
         ////////////////////////////////////////////////////////////////////
-        //? Step 3: (optionnal - only to be used in "degen" pools)
+        //? Step 3: (optionnal - only to be used for "degen" vaults)
         // Enable ETH as collateral and create a leveraged position
         // by lending the deposited ETH and borrowing a fraction
         // of the deposit to lend it again -> TO BE IMPLEMENTED LATER ON
