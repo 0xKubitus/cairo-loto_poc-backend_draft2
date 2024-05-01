@@ -271,29 +271,24 @@ mod TicketsHandlerContract {
             // TODO: MAKE THIS FUNCTION'S TEST SUCCESSFULLY PASS!!! ("fn test__deposit_on_zkLend()")
             // Step 1: allow "zkLend Market" contract to
             // spend given amount of the `underlying_asset` from this contract
-            let underlying_asset: ContractAddress = self.ticket.underlying_asset.read();
-            // let underlying_asset: ContractAddress = self.ticket.underlying_erc20_asset(); // using this instead doesn't solve the issue
-            
-            //! to be turned into a private function (which will also need to be tested, for good measure)
+            let underlying_asset: ContractAddress = self.ticket.underlying_asset.read();            
             let zkLend_market: ContractAddress = self.zkLend_mkt_addrs.read();
-            // let zkLend_market: ContractAddress = self.get_zkLend_market_address(); // using this instead doesn't solve the issue
 
             let erc20_dispatcher = IERC20Dispatcher { contract_address: underlying_asset };
             erc20_dispatcher.approve(zkLend_market, amount);
-            assert(erc20_dispatcher.allowance(get_contract_address(), zkLend_market) == amount, 'approval error'); // not mandatory
 
-        // Step 2: Make a deposit of the given amount
-        // of `underlying_asset` into zkLend Market contract
-        //? zkLend's contract uses felt252 (not u256) to manage amounts.
-        let felt_amount: felt252 = amount.try_into().unwrap(); 
-        let zkLend_dispatcher = IzkLendMarketDispatcher{ contract_address: zkLend_market };
+            // assert(erc20_dispatcher.allowance(get_contract_address(), zkLend_market) == amount, 'approval error'); // not mandatory
 
-        // =================================================================
-        //!\
-        //TODO: Find out why below line triggers this error:
-        // "unit_tests::contracts::test_tickets_handler::test__deposit_on_zkLend - Panicked with 0x454e545259504f494e545f4e4f545f464f554e44 ('ENTRYPOINT_NOT_FOUND')"
-        zkLend_dispatcher.deposit(underlying_asset, felt_amount);
-        // =================================================================        
+            // Step 2: Make a deposit of the given amount
+            // of `underlying_asset` into zkLend Market contract
+            //? zkLend's contract uses felt252 (not u256) to manage amounts.
+            let felt_amount: felt252 = amount.try_into().unwrap(); 
+            let zkLend_dispatcher = IzkLendMarketDispatcher{ contract_address: zkLend_market };
+
+            // =================================================================
+            // everything above does not trigger any error
+            zkLend_dispatcher.deposit(underlying_asset, felt_amount);
+            // =================================================================
 
         ////////////////////////////////////////////////////////////////////
         //? Step 3: (optionnal - only to be used for "degen" vaults)
