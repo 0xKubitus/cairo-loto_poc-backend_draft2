@@ -81,6 +81,31 @@ fn setup_dispatcher() -> TicketsHandlerABIDispatcher {
     dispatcher
 }
 
+fn setup_dispatcher_with_event2() -> TicketsHandlerABIDispatcher {
+    let mut calldata = array![];
+    let mut token_ids = array![TOKEN_1, TOKEN_2, TOKEN_3];
+
+    calldata.append_serde(NAME());
+    calldata.append_serde(SYMBOL());
+    calldata.append_serde(BASE_URI());
+    calldata.append_serde(OWNER());
+    calldata.append_serde(token_ids);
+    calldata.append_serde(OWNER());
+    calldata.append_serde(ETH_ADDRS());
+    calldata.append_serde(TEN_WITH_6_DECIMALS);
+    calldata.append_serde(ZKLEND_MKT_ADDRS());
+
+    let address = utils::deploy(TicketsHandlerContract::TEST_CLASS_HASH, calldata);
+    TicketsHandlerABIDispatcher { contract_address: address }
+}
+
+fn setup_dispatcher2() -> TicketsHandlerABIDispatcher {
+    let dispatcher = setup_dispatcher_with_event2();
+    // `OwnershipTransferred` + `Transfer`s
+    utils::drop_events(dispatcher.contract_address, TOKENS_LEN.try_into().unwrap() + 1);
+    dispatcher
+}
+
 fn setup_max() -> TicketsHandlerABIDispatcher {
     let mut calldata = array![];
     let mut token_ids: Array<u256> = array![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -192,17 +217,58 @@ fn test__burn_not_ticket_owner() {
     state._burn(1);
 }
 
-//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-// #[test]
-// fn test__deposit_on_zkLend() {
-//! I DID NOT MANAGE TO TEST THIS FUNCTION USING THE "contract_state_for_testing()" METHOD,
-//! LET'S TRY TO MAKE IT AN INTEGRATION TEST WHICH ACTUALLY DEPLOYS EACH REQUIRED CONTRACT
-//     let mut erc20_contract_state = SnakeERC20Mock::contract_state_for_testing();
-//     let mut tickets_handler_state = TicketsHandlerContract::contract_state_for_testing();
-//     testing::set_contract_address();
-//     (...)
-// }
-//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// TODO: MAKE THIS TEST PASS SUCCESSFULLY
+#[test]
+fn test__deposit_on_zkLend() {
+    // //step 1
+    // // deployer un ERC20Mock = "token A" et donner la supply à "OWNER"
+    // let underlying_erc20_addrs = full_setup_erc20_address("USDC contract", "USDC", OWNER());
+    // let token_A_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs, OWNER());
+    // // verifier deploiement
+    // let owner_tokenA_balance_before = token_A_dispatcher.balance_of(OWNER());
+    // assert_eq!(owner_tokenA_balance_before, TEN_WITH_6_DECIMALS);
+
+    // //step 2
+    // // deployer un zkLendMarketMock avec une fonction "deposit()"
+    // let calldata: Array<felt252> = array![];
+    // let zklend_market_addrs = utils::deploy(zkLendMarketMock::TEST_CLASS_HASH, calldata);
+    // let zkLendMarketMock_dispatcher = IzkLendMarketDispatcher { contract_address: zklend_market_addrs };
+
+    // //step 3
+    // // deployer un 2eme ERC20Mock => fake zUSDC et donner la supply au zkLendMarketMock contrat
+    // let zklend_PoD_token_addrs = full_setup_erc20_address( "zkLend USDC proof of deposit", "zUSDC", zklend_market_addrs );
+    // let token_B_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs, OWNER());
+
+    // //step 4
+    // // deployer tickets_handler
+    // let batch_mint_IDs: Array<u256> = array![]; //? OPTION --> (checker si je peux faire en sorte de ne pas avoir de batch-mint au deploiement)
+    // let tickets_handler_dispatcher = ticket_dispatcher_with_event_bis(batch_mint_IDs, underlying_erc20_addrs, zklend_market_addrs);
+    // let tickets_handler_addrs = tickets_handler_dispatcher.contract_address;
+
+    // //? NOTE FOR SELF: I CANNOT USE THE BELOW LINE (PRIVATE FUNCTIONS SEEM NOT TO BE ACCESSIBLE THIS WAY)
+    // //? tickets_handler_dispatcher._deposit_on_zkLend(underlying_erc20_addrs, TEN_WITH_6_DECIMALS); // => "Method `_deposit_on_zkLend` could not be called on type `cairo_loto_poc::tickets_handler::interface::TicketsHandlerABIDispatcher`".
+
+    // // utiliser "set_contract_for_testing" avec tickets_handler pour tester la fonction interne `fn _deposit_on_zkLend()`
+    // let mut state = TicketsHandlerContract::contract_state_for_testing();
+    // //! AJOUTER L'ADDRESSE DU CONTRAT ZKLEND MARKET DANS UN 2ND INITIALIZER() CI-DESSOUS !!!
+    // state.ticket.initializer(underlying_erc20_addrs, TEN_WITH_6_DECIMALS);
+    
+    // // noter le montant des depots de tickets_handler sur zklend market avant le depot
+    // let deposit_value_before = zkLendMarketMock_dispatcher.get_deposit_value_of(tickets_handler_addrs);
+    
+    // // effectuer le depot sur zklend_market avec la fonction privée à tester
+    // state._deposit_on_zkLend(TEN_WITH_6_DECIMALS);
+
+    // // verifier que desormais tickets_handler ne possede plus aucun token_A
+
+    // // verifier que desormais tickets_handler possede "TEN_WITH_6_DECIMALS" token_B
+
+    // //! verifier que desormais zkLendMarketMock ne possede plus aucun token_B
+
+    // //! verifier que desormais zkLendMarketMock possede "TEN_WITH_6_DECIMALS" token_A
+
+}
+
 
 //
 // TEST EXTERNAL FUNCTIONS
@@ -263,6 +329,51 @@ fn test_constructor_events() {
         assert_event_transfer(dispatcher.contract_address, ZERO(), OWNER(), token);
     };
 }
+
+
+// Setters from TicketsHandlerContract
+
+#[test]
+fn test_set_zkLend_market_address() {
+    let dispatcher = setup_dispatcher();
+    // assert_eq!(dispatcher.get_zkLend_market_address(), ZKLEND_MKT_ADDRS()); // not mandatory
+
+    testing::set_caller_address(OWNER());
+    dispatcher.set_zkLend_market_address(OTHER());
+
+    assert_eq!(dispatcher.get_zkLend_market_address(), OTHER());
+}
+
+#[test]
+#[should_panic]
+fn test_set_zkLend_market_address_false() {
+    let dispatcher = setup_dispatcher();
+    // assert_eq!(dispatcher.get_zkLend_market_address(), ZKLEND_MKT_ADDRS()); // not mandatory
+
+    testing::set_caller_address(OWNER());
+    dispatcher.set_zkLend_market_address(OTHER());
+
+    // TEST PANICS BECAUSE `zkLend_market_address` HAS BEEN CHANGED TO "OTHER"
+    assert_eq!(dispatcher.get_zkLend_market_address(), OWNER());
+}
+
+#[test]
+#[should_panic]
+fn test_set_zkLend_market_address_not_owner() {
+    let dispatcher = setup_dispatcher2();
+    // assert_eq!(dispatcher.get_zkLend_market_address(), ZKLEND_MKT_ADDRS()); // not mandatory
+
+    testing::set_caller_address(OTHER());
+
+    // TEST PANICS BECAUSE CALLER IS NOT THE CONTRAT OWNER
+    dispatcher.set_zkLend_market_address(OTHER());
+}
+
+//!
+//! for some TicketsHandlerContract external functions (TicketsHandlerImpl of ITicketsHandlerTrait) tests,
+//! => See tests/integration_tests/test_tickets_v03_externals.cairo
+//!
+
 
 //
 // Getters from ERC721 component
@@ -348,6 +459,7 @@ fn test_get_approved_nonexistent() {
     dispatcher.get_approved(NONEXISTENT);
 }
 
+
 //
 // CairoLotoTicketComponent external functions (which are getters only)
 //
@@ -378,10 +490,8 @@ fn test_total_tickets_emitted() {
 
 // =================================================================
 
-// SETTERS (External/Public Functions)
-
 //
-// Functions from OZ's ERC721Upgradeable Preset
+// SETTERS (External/Public Functions) Functions from OZ's ERC721Upgradeable Preset
 //
 
 //
@@ -1315,12 +1425,6 @@ fn test_state_persists_after_upgrade() {
     assert_eq!(snake_balance, camel_balance);
 }
 
-
-//!
-//! Test TicketsHandlerContract external functions (TicketsHandlerImpl of ITicketsHandlerTrait)
-//!
-//! => See tests/integration_tests/test_tickets_v03_externals.cairo
-//!
 
 //
 // Helpers
