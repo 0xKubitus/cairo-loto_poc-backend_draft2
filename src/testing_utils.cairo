@@ -5,25 +5,19 @@ mod presets;
 mod token;
 mod upgrades;
 
+
 ////////////////////////////////
 
-use cairo_loto_poc::tickets_handler::tickets_handler::TicketsHandlerContract;
-use cairo_loto_poc::tickets_handler::interface::{
-    TicketsHandlerABIDispatcher, TicketsHandlerABIDispatcherTrait,
-};
-use cairo_loto_poc::testing_utils::constants::{
-    TEN_WITH_6_DECIMALS, ETH_ADDRS, ZKLEND_MKT_ADDRS,
-};
-// use cairo_loto_poc::testing_utils::constants::{fake_ERC20_asset,};
 
+use cairo_loto_poc::tickets_handler::tickets_handler::TicketsHandlerContract;
+use cairo_loto_poc::tickets_handler::interface::{TicketsHandlerABIDispatcher, TicketsHandlerABIDispatcherTrait,};
+use cairo_loto_poc::testing_utils::constants::{
+    TOKEN_1, TOKEN_2, TOKEN_3, TOKENS_LEN, NONEXISTENT, TEN_WITH_6_DECIMALS, ETH_ADDRS, ZKLEND_MKT_ADDRS,
+};
 use cairo_loto_poc::testing_utils::mocks::account_mocks::{DualCaseAccountMock, CamelAccountMock};
 use cairo_loto_poc::testing_utils::mocks::erc20_mock::SnakeERC20Mock;
 use cairo_loto_poc::testing_utils::mocks::erc721_mocks::SnakeERC721Mock;
-use cairo_loto_poc::testing_utils::mocks::erc721_receiver_mocks::{
-    CamelERC721ReceiverMock, SnakeERC721ReceiverMock
-};
-
-
+use cairo_loto_poc::testing_utils::mocks::erc721_receiver_mocks::{CamelERC721ReceiverMock, SnakeERC721ReceiverMock};
 
 use openzeppelin::tests::utils;
 use openzeppelin::utils::serde::SerializedAppend;
@@ -46,16 +40,6 @@ use starknet::{testing, ContractAddress,};
 // use starknet::SyscallResultTrait;
 
 
-
-//
-// Constants
-//
-const TOKEN_1: u256 = 1;
-const TOKEN_2: u256 = 2;
-const TOKEN_3: u256 = 3;
-const NONEXISTENT: u256 = 9898;
-
-const TOKENS_LEN: u256 = 3;
 
 
 //

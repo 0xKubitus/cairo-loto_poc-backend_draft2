@@ -22,8 +22,8 @@ use openzeppelin::tests::utils::constants::{
     ZERO, DATA, OWNER, SPENDER, RECIPIENT, OTHER, OPERATOR, CLASS_HASH_ZERO, PUBKEY, NAME, SYMBOL,
     BASE_URI
 };
-use cairo_loto_poc::testing_utils::constants::{TEN_WITH_6_DECIMALS, fake_ERC20_asset, ETH_ADDRS, ZKLEND_MKT_ADDRS,};
 use cairo_loto_poc::testing_utils;
+use cairo_loto_poc::testing_utils::constants::{TOKEN_1, TOKEN_2, TOKEN_3, TOKENS_LEN,NONEXISTENT, TEN_WITH_6_DECIMALS, fake_ERC20_asset, ETH_ADDRS, ZKLEND_MKT_ADDRS,};
 
 use openzeppelin::tests::utils;
 use openzeppelin::token::erc721::ERC721Component::ERC721Impl;
@@ -39,16 +39,12 @@ use starknet::testing;
 use starknet::{ContractAddress, ClassHash};
 
 
-// Token IDs
-const TOKEN_1: u256 = 1;
-const TOKEN_2: u256 = 2;
-const TOKEN_3: u256 = 3;
-const NONEXISTENT: u256 = 9898;
 
-const TOKENS_LEN: u256 = 3;
 
 fn V2_CLASS_HASH() -> ClassHash {
     SnakeERC721Mock::TEST_CLASS_HASH.try_into().unwrap()
+    //? I'm not sure that it is relevant to use the above mock here,
+    //? but do I really need to write a mock of my contract for this test?
 }
 
 

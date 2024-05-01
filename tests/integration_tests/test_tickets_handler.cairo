@@ -11,7 +11,7 @@ use cairo_loto_poc::testing_utils::mocks::zklend_market_mock::{
     zkLendMarketMock, IzkLendMarketDispatcher,IzkLendMarketDispatcherTrait,
 };
 use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
-use cairo_loto_poc::testing_utils::constants::{
+use cairo_loto_poc::testing_utils::constants::{TOKEN_1, TOKEN_2, TOKEN_3, TOKENS_LEN,
     TEN_WITH_6_DECIMALS, ETH_ADDRS, SOME_ERC20, COIN, fake_ERC20_asset, ZKLEND_MKT_ADDRS,
 };
 use openzeppelin::tests::utils::constants::{
@@ -23,18 +23,10 @@ use starknet::testing;
 use starknet::{ContractAddress,};
 
 
-//
-// Definition of Constant values
-//
-const TOKEN_1: u256 = 1;
-const TOKEN_2: u256 = 2;
-const TOKEN_3: u256 = 3;
-// const NONEXISTENT: u256 = 9898;
-
-const TOKENS_LEN: u256 = 3;
-
-
 // #############################################################################
+
+
+
 
 //
 // Setup
