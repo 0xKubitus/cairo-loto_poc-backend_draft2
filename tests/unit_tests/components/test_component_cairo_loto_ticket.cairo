@@ -6,9 +6,9 @@ use cairo_loto_poc::tickets_handler::components::cairo_loto_ticket::{
     ICairoLotoTicket, ICairoLotoTicketDispatcher, ICairoLotoTicketDispatcherTrait,
 };
 use cairo_loto_poc::testing_utils::mocks::cairo_loto_ticket_mock::CairoLotoTicketMock;
-use cairo_loto_poc::testing_utils;
-use cairo_loto_poc::testing_utils::{SerializedAppend,};
 use cairo_loto_poc::testing_utils::constants::{TEN_WITH_6_DECIMALS, ETH_ADDRS, fake_ERC20_asset,};
+use openzeppelin::tests::utils;
+use openzeppelin::utils::serde::{SerializedAppend,};
 use openzeppelin::tests::utils::constants::{OWNER, OTHER,};
 use starknet::{ContractAddress, SyscallResultTrait,};
 use starknet::testing;
@@ -24,7 +24,7 @@ fn setup_eth_ticket() -> ICairoLotoTicketDispatcher {
     //? to the test runner at which address it must lookup for storage…
     // is this useful in this case, though?
 
-    let address = testing_utils::deploy(CairoLotoTicketMock::TEST_CLASS_HASH, calldata);
+    let address = utils::deploy(CairoLotoTicketMock::TEST_CLASS_HASH, calldata);
     ICairoLotoTicketDispatcher { contract_address: address }
 }
 fn fake_erc20_ticket_setup() -> ICairoLotoTicketDispatcher {
@@ -36,7 +36,7 @@ fn fake_erc20_ticket_setup() -> ICairoLotoTicketDispatcher {
     //? to the test runnerat which address it must lookup for storage…
     // is this useful in this case, though?
 
-    let address = testing_utils::deploy(CairoLotoTicketMock::TEST_CLASS_HASH, calldata);
+    let address = utils::deploy(CairoLotoTicketMock::TEST_CLASS_HASH, calldata);
     ICairoLotoTicketDispatcher { contract_address: address }
 }
 // #############################################################################

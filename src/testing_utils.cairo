@@ -1,38 +1,156 @@
-mod constants;
-
 mod access;
 mod mocks;
+mod constants;
 mod presets;
 mod token;
 mod upgrades;
 
 ////////////////////////////////
 
-use starknet::ContractAddress;
-use starknet::SyscallResultTrait;
-// use starknet::testing;
+use cairo_loto_poc::tickets_handler::tickets_handler::TicketsHandlerContract;
+use cairo_loto_poc::tickets_handler::interface::{
+    TicketsHandlerABIDispatcher, TicketsHandlerABIDispatcherTrait,
+};
+use cairo_loto_poc::testing_utils::constants::{
+    TEN_WITH_6_DECIMALS, ETH_ADDRS, ZKLEND_MKT_ADDRS,
+};
+// use cairo_loto_poc::testing_utils::constants::{fake_ERC20_asset,};
 
-fn deploy(contract_class_hash: felt252, calldata: Array<felt252>) -> ContractAddress {
-    deploy_with_salt(contract_class_hash, calldata, 0)
+use cairo_loto_poc::testing_utils::mocks::account_mocks::{DualCaseAccountMock, CamelAccountMock};
+use cairo_loto_poc::testing_utils::mocks::erc20_mock::SnakeERC20Mock;
+use cairo_loto_poc::testing_utils::mocks::erc721_mocks::SnakeERC721Mock;
+use cairo_loto_poc::testing_utils::mocks::erc721_receiver_mocks::{
+    CamelERC721ReceiverMock, SnakeERC721ReceiverMock
+};
+
+
+
+use openzeppelin::tests::utils;
+use openzeppelin::utils::serde::SerializedAppend;
+use openzeppelin::tests::utils::constants::{
+    OWNER, 
+    NAME, 
+    SYMBOL, 
+    BASE_URI,
+    PUBKEY, 
+    // ZERO, 
+    // DATA, 
+    // SPENDER, 
+    // RECIPIENT, 
+    // OTHER, 
+    // OPERATOR, 
+    // CLASS_HASH_ZERO, 
+};
+
+use starknet::{testing, ContractAddress,};
+// use starknet::SyscallResultTrait;
+
+
+
+//
+// Constants
+//
+const TOKEN_1: u256 = 1;
+const TOKEN_2: u256 = 2;
+const TOKEN_3: u256 = 3;
+const NONEXISTENT: u256 = 9898;
+
+const TOKENS_LEN: u256 = 3;
+
+
+//
+// Setup
+//
+
+fn setup_dispatcher_with_event() -> TicketsHandlerABIDispatcher {
+    let mut calldata = array![];
+    let mut token_ids = array![TOKEN_1, TOKEN_2, TOKEN_3];
+
+    // Set caller as `OWNER`
+    testing::set_contract_address(OWNER());
+
+    calldata.append_serde(NAME());
+    calldata.append_serde(SYMBOL());
+    calldata.append_serde(BASE_URI());
+    calldata.append_serde(OWNER());
+    calldata.append_serde(token_ids);
+    calldata.append_serde(OWNER());
+    calldata.append_serde(ETH_ADDRS());
+    calldata.append_serde(TEN_WITH_6_DECIMALS);
+    calldata.append_serde(ZKLEND_MKT_ADDRS());
+
+    let address = utils::deploy(TicketsHandlerContract::TEST_CLASS_HASH, calldata);
+    TicketsHandlerABIDispatcher { contract_address: address }
 }
 
-fn deploy_with_salt(
-    contract_class_hash: felt252, calldata: Array<felt252>, salt: felt252
-) -> ContractAddress {
-    let (address, _) = starknet::deploy_syscall(
-        contract_class_hash.try_into().unwrap(), salt, calldata.span(), false
-    )
-        .unwrap_syscall();
-    address
+fn setup_dispatcher() -> TicketsHandlerABIDispatcher {
+    let dispatcher = setup_dispatcher_with_event();
+    // `OwnershipTransferred` + `Transfer`s
+    utils::drop_events(dispatcher.contract_address, TOKENS_LEN.try_into().unwrap() + 1);
+    dispatcher
 }
 
+fn setup_dispatcher_with_event2() -> TicketsHandlerABIDispatcher {
+    let mut calldata = array![];
+    let mut token_ids = array![TOKEN_1, TOKEN_2, TOKEN_3];
 
-trait SerializedAppend<T> {
-    fn append_serde(ref self: Array<felt252>, value: T);
+    calldata.append_serde(NAME());
+    calldata.append_serde(SYMBOL());
+    calldata.append_serde(BASE_URI());
+    calldata.append_serde(OWNER());
+    calldata.append_serde(token_ids);
+    calldata.append_serde(OWNER());
+    calldata.append_serde(ETH_ADDRS());
+    calldata.append_serde(TEN_WITH_6_DECIMALS);
+    calldata.append_serde(ZKLEND_MKT_ADDRS());
+
+    let address = utils::deploy(TicketsHandlerContract::TEST_CLASS_HASH, calldata);
+    TicketsHandlerABIDispatcher { contract_address: address }
 }
 
-impl SerializedAppendImpl<T, impl TSerde: Serde<T>, impl TDrop: Drop<T>> of SerializedAppend<T> {
-    fn append_serde(ref self: Array<felt252>, value: T) {
-        value.serialize(ref self);
-    }
+fn setup_dispatcher2() -> TicketsHandlerABIDispatcher {
+    let dispatcher = setup_dispatcher_with_event2();
+    // `OwnershipTransferred` + `Transfer`s
+    utils::drop_events(dispatcher.contract_address, TOKENS_LEN.try_into().unwrap() + 1);
+    dispatcher
+}
+
+fn setup_max() -> TicketsHandlerABIDispatcher {
+    let mut calldata = array![];
+    let mut token_ids: Array<u256> = array![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+    // Set caller as `OWNER`
+    testing::set_contract_address(OWNER());
+
+    calldata.append_serde(NAME());
+    calldata.append_serde(SYMBOL());
+    calldata.append_serde(BASE_URI());
+    calldata.append_serde(OWNER());
+    calldata.append_serde(token_ids);
+    calldata.append_serde(OWNER());
+    calldata.append_serde(ETH_ADDRS());
+    calldata.append_serde(TEN_WITH_6_DECIMALS);
+
+    let address = utils::deploy(TicketsHandlerContract::TEST_CLASS_HASH, calldata);
+    let dispatcher = TicketsHandlerABIDispatcher { contract_address: address };
+    utils::drop_events(dispatcher.contract_address, TOKENS_LEN.try_into().unwrap() + 1);
+    dispatcher
+}
+
+fn setup_receiver() -> ContractAddress {
+    utils::deploy(SnakeERC721ReceiverMock::TEST_CLASS_HASH, array![])
+}
+
+fn setup_camel_receiver() -> ContractAddress {
+    utils::deploy(CamelERC721ReceiverMock::TEST_CLASS_HASH, array![])
+}
+
+fn setup_account() -> ContractAddress {
+    let mut calldata = array![PUBKEY];
+    utils::deploy(DualCaseAccountMock::TEST_CLASS_HASH, calldata)
+}
+
+fn setup_camel_account() -> ContractAddress {
+    let mut calldata = array![PUBKEY];
+    utils::deploy(CamelAccountMock::TEST_CLASS_HASH, calldata)
 }
