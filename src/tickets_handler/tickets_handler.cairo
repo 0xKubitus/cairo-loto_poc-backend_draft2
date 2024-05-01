@@ -190,7 +190,9 @@ mod TicketsHandlerContract {
 
         #[external(v0)]
         fn get_zkLend_market_address(self: @ContractState) -> ContractAddress {
-            self.zkLend_mkt_addrs.read()  //! to be turned into a private function (which will also need to be tested) because it's being used several times in this contract
+            self
+                .zkLend_mkt_addrs
+                .read() //! to be turned into a private function (which will also need to be tested) because it's being used several times in this contract
         }
 
         #[external(v0)]
@@ -270,23 +272,27 @@ mod TicketsHandlerContract {
             // spend given amount of the `underlying_asset` from this contract
             let underlying_asset: ContractAddress = self.ticket.underlying_asset.read();
 
-            let zkLend_market: ContractAddress = self.zkLend_mkt_addrs.read(); //! to be turned into a private function (which will also need to be tested, for good measure)
+            let zkLend_market: ContractAddress = self
+                .zkLend_mkt_addrs
+                .read(); //! to be turned into a private function (which will also need to be tested, for good measure)
 
             let erc20_dispatcher = IERC20Dispatcher { contract_address: underlying_asset };
             erc20_dispatcher.approve(zkLend_market, amount);
 
             // Step 2: Make a deposit of the given amount
             // of `underlying_asset` into zkLend Market contract
-            let felt_amount: felt252 = amount.try_into().unwrap(); // <- zkLend's contract uses felt252 (not u256) to manage amounts.
-            IzkLendMarketDispatcher{ contract_address: zkLend_market }.deposit(underlying_asset, felt_amount);
-            
-            ////////////////////////////////////////////////////////////////////
-            //? Step 3: (optionnal - only to be used in "degen" pools)
-            // Enable ETH as collateral and create a leveraged position
-            // by lending the deposited ETH and borrowing a fraction
-            // of the deposit to lend it again -> TO BE IMPLEMENTED LATER ON
-            // zkLend_market_dispatcher.borrow(underlying_asset, felt_borrow_amount);
-            ////////////////////////////////////////////////////////////////////
+            let felt_amount: felt252 = amount
+                .try_into()
+                .unwrap(); // <- zkLend's contract uses felt252 (not u256) to manage amounts.
+            IzkLendMarketDispatcher { contract_address: zkLend_market }
+                .deposit(underlying_asset, felt_amount);
+        ////////////////////////////////////////////////////////////////////
+        //? Step 3: (optionnal - only to be used in "degen" pools)
+        // Enable ETH as collateral and create a leveraged position
+        // by lending the deposited ETH and borrowing a fraction
+        // of the deposit to lend it again -> TO BE IMPLEMENTED LATER ON
+        // zkLend_market_dispatcher.borrow(underlying_asset, felt_borrow_amount);
+        ////////////////////////////////////////////////////////////////////
         }
 
         /// Withdraws given amount of `underlying_asset` from this contract into matching erc20 vault from zkLend

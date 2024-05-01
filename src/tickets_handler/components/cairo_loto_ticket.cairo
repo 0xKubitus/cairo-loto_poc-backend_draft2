@@ -13,7 +13,7 @@ pub mod CairoLotoTicketComponent {
     use super::ICairoLotoTicket;
     use starknet::ContractAddress;
 
-    
+
     #[storage]
     struct Storage {
         underlying_asset: ContractAddress,

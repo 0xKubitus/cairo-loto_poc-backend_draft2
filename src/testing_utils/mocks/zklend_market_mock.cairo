@@ -5,7 +5,7 @@ trait IzkLendMarket<TState> {
     fn get_deposit_value_of(self: @TState, user: ContractAddress) -> u256;
 
     fn deposit(ref self: TState, erc20_token: ContractAddress, amount: felt252);
-    // fn withdraw(ref self: TState, token: ContractAddress, amount: felt252);
+// fn withdraw(ref self: TState, token: ContractAddress, amount: felt252);
 }
 
 
