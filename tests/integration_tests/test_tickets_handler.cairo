@@ -12,7 +12,7 @@ use cairo_loto_poc::testing_utils::mocks::zklend_market_mock::{
 };
 use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
 use cairo_loto_poc::testing_utils::constants::{
-    TEN_WITH_6_DECIMALS, ETH_ADDRS, SOME_ERC20, COIN, fake_ERC20_asset,
+    TEN_WITH_6_DECIMALS, ETH_ADDRS, SOME_ERC20, COIN, fake_ERC20_asset, ZKLEND_MKT_ADDRS,
 };
 use openzeppelin::tests::utils::constants::{
     ZERO, DATA, OWNER, SPENDER, RECIPIENT, OTHER, NAME, SYMBOL, BASE_URI,
@@ -89,12 +89,13 @@ fn ticket_dispatcher_with_event(erc20_addrs: ContractAddress) -> TicketsHandlerA
     calldata.append_serde(OWNER());
     calldata.append_serde(erc20_addrs);
     calldata.append_serde(TEN_WITH_6_DECIMALS);
+    calldata.append_serde(ZKLEND_MKT_ADDRS());
 
     let address = utils::deploy(TicketsHandlerContract::TEST_CLASS_HASH, calldata);
     TicketsHandlerABIDispatcher { contract_address: address }
 }
 
-fn ticket_dispatcher_with_event_bis(batch_mint_IDs: Array<u256>, erc20_addrs: ContractAddress) -> TicketsHandlerABIDispatcher {
+fn ticket_dispatcher_with_event_bis(batch_mint_IDs: Array<u256>, erc20_addrs: ContractAddress, zklend_mkt_addrs: ContractAddress,) -> TicketsHandlerABIDispatcher {
     let mut calldata = array![];
 
     // Set caller as `OWNER`
@@ -108,6 +109,7 @@ fn ticket_dispatcher_with_event_bis(batch_mint_IDs: Array<u256>, erc20_addrs: Co
     calldata.append_serde(OWNER());
     calldata.append_serde(erc20_addrs);
     calldata.append_serde(TEN_WITH_6_DECIMALS);
+    calldata.append_serde(zklend_mkt_addrs);
 
     let address = utils::deploy(TicketsHandlerContract::TEST_CLASS_HASH, calldata);
     TicketsHandlerABIDispatcher { contract_address: address }
@@ -176,7 +178,7 @@ fn setup_max() -> TicketsHandlerABIDispatcher {
 //     //step 4
 //     // deployer tickets_handler
 //     let batch_mint_IDs: Array<u256> = array![]; //? OPTION --> (checker si je peux faire en sorte de ne pas avoir de batch-mint au deploiement)
-//     let tickets_handler_dispatcher = ticket_dispatcher_with_event_bis(batch_mint_IDs, underlying_erc20_addrs);
+//     let tickets_handler_dispatcher = ticket_dispatcher_with_event_bis(batch_mint_IDs, underlying_erc20_addrs, zklend_market_addrs);
 //     let tickets_handler_addrs = tickets_handler_dispatcher.contract_address;
 
 //     //? NOTE FOR SELF: I CANNOT USE THE BELOW LINE (PRIVATE FUNCTIONS SEEM NOT TO BE ACCESSIBLE THIS WAY)
@@ -251,7 +253,7 @@ fn test_try_mint_11th_ticket() {
     let underlying_erc20_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs, OWNER());
 
     let batch_mint_IDs: Array<u256> = array![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-    let tickets_handler_dispatcher = ticket_dispatcher_with_event_bis(batch_mint_IDs, underlying_erc20_addrs);
+    let tickets_handler_dispatcher = ticket_dispatcher_with_event_bis(batch_mint_IDs, underlying_erc20_addrs, ZKLEND_MKT_ADDRS());
 
     let tickets_handler_addrs = tickets_handler_dispatcher.contract_address;
     let amount = tickets_handler_dispatcher.ticket_value();
@@ -271,7 +273,7 @@ fn test_try_mint_without_erc20_allowance() {
 
     let batch_mint_IDs: Array<u256> = array![1, 2, 3,];
     let tickets_handler_dispatcher = ticket_dispatcher_with_event_bis(
-        batch_mint_IDs, underlying_erc20_addrs
+        batch_mint_IDs, underlying_erc20_addrs, ZKLEND_MKT_ADDRS(),
     );
 
     testing::set_caller_address(OWNER());
@@ -288,7 +290,7 @@ fn test_try_mint_with_smaller_allowance() {
 
     let batch_mint_IDs: Array<u256> = array![1, 2, 3,];
     let tickets_handler_dispatcher = ticket_dispatcher_with_event_bis(
-        batch_mint_IDs, underlying_erc20_addrs
+        batch_mint_IDs, underlying_erc20_addrs, ZKLEND_MKT_ADDRS(),
     );
 
     let tickets_handler_addrs = tickets_handler_dispatcher.contract_address;
@@ -368,7 +370,7 @@ fn test_try_burn_not_owner() {
     // Deploy TicketsHandlerContract with ERC20 as the `underlying_asset` and mint 1 ticket to "OWNER"
     let batch_mint_IDs: Array<u256> = array![1, 2, 3];
     let tickets_handler_dispatcher = ticket_dispatcher_with_event_bis(
-        batch_mint_IDs, underlying_erc20_addrs
+        batch_mint_IDs, underlying_erc20_addrs, ZKLEND_MKT_ADDRS(),
     );
     let tickets_handler_addrs = tickets_handler_dispatcher.contract_address;
 

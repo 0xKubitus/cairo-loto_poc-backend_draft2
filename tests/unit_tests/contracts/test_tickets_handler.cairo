@@ -22,7 +22,7 @@ use openzeppelin::tests::utils::constants::{
     ZERO, DATA, OWNER, SPENDER, RECIPIENT, OTHER, OPERATOR, CLASS_HASH_ZERO, PUBKEY, NAME, SYMBOL,
     BASE_URI
 };
-use cairo_loto_poc::testing_utils::constants::{TEN_WITH_6_DECIMALS, fake_ERC20_asset, ETH_ADDRS,};
+use cairo_loto_poc::testing_utils::constants::{TEN_WITH_6_DECIMALS, fake_ERC20_asset, ETH_ADDRS, ZKLEND_MKT_ADDRS,};
 use openzeppelin::tests::utils;
 use openzeppelin::token::erc721::ERC721Component::ERC721Impl;
 use openzeppelin::token::erc721::ERC721Component;
@@ -68,6 +68,7 @@ fn setup_dispatcher_with_event() -> TicketsHandlerABIDispatcher {
     calldata.append_serde(OWNER());
     calldata.append_serde(ETH_ADDRS());
     calldata.append_serde(TEN_WITH_6_DECIMALS);
+    calldata.append_serde(ZKLEND_MKT_ADDRS());
 
     let address = utils::deploy(TicketsHandlerContract::TEST_CLASS_HASH, calldata);
     TicketsHandlerABIDispatcher { contract_address: address }
@@ -217,6 +218,9 @@ fn test_constructor() {
 
     // Check contract's owner value is correct
     assert_eq!(dispatcher.owner(), OWNER());
+
+    // Check storage value of `zkLend_market_address` is correct
+    assert_eq!(dispatcher.get_zkLend_market_address(), ZKLEND_MKT_ADDRS());
 
     // Check interface registration
     let mut interface_ids = array![ISRC5_ID, IERC721_ID, IERC721_METADATA_ID];

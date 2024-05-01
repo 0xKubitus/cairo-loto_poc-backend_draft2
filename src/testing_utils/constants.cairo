@@ -3,8 +3,12 @@ use starknet::{contract_address_const,};
 
 
 const TEN_WITH_6_DECIMALS: u256 = 10000000;
-const THOUSAND_WITH_18_DECIMALS: u256 = 1000000000000000000000;
+// const THOUSAND_WITH_18_DECIMALS: u256 = 1000000000000000000000;
 
+
+fn ZKLEND_MKT_ADDRS() -> ContractAddress {
+    contract_address_const::<'ZKLEND_MKT_ADDRS'>()
+}
 
 fn fake_ERC20_asset() -> ContractAddress {
     contract_address_const::<'fake_ERC20_asset'>()
