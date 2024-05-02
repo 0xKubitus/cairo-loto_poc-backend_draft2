@@ -150,14 +150,13 @@ mod TicketsHandlerContract {
             //! Create a private function for depositing a given
             //! erc20 "asset" and "amount".
             //! -> implement unit test of this private function
+            
+            //! Step 2:
+            /// use the newly created private function to deposit
+            /// `ticket_value` into zkLend's `underlying asset` vault
             // self._make_zklend_deposit(underlying_erc20, ticket_value);
 
-            //! Step 2:
-            // use the newly created private function to deposit
-            // `ticket_value` into zkLend's `underlying asset` vault
-
-            //! Step 3:
-            // Update tests of this public function 
+            //! Step 3: Update tests of this public function 
 
             // Define next ticket's `token_id`
             let token_id = self.ticket.total_supply.read() + 1;
@@ -285,7 +284,7 @@ mod TicketsHandlerContract {
             // of `underlying_asset` into zkLend Market contract
             let zkLend_market: ContractAddress = self.zkLend_mkt_addrs.read();
             let zkLend_dispatcher = IzkLendMarketDispatcher { contract_address: zkLend_market };
-            // zkLend's contract uses felt252 (not u256) to manage amounts ->
+            //? zkLend's contract uses felt252 (not u256) to manage amounts ->
             let felt_amount: felt252 = amount.try_into().unwrap();
 
             zkLend_dispatcher.deposit(erc20_asset, felt_amount);

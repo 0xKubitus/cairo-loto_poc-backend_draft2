@@ -180,80 +180,81 @@ fn test__approve_zkLend_for() {
 
 #[test]
 fn test__deposit_to_zkLend() {
-    // STEP 1:
+    // STEP 1: zklend market et le proof of deposit token
     // A: deployer zklend market mock - sans initialiser l'addresse du proof of deposit token dans le storage au deploiement.
     let no_calldata = array![];
     let zkLend_market_addrs = utils::deploy(zkLendMarketMock::TEST_CLASS_HASH, no_calldata);
 
-//     // B: deployer le proof of deposit token - donner la supply au zklend market mock au deploiement.
-//     let proof_of_deposit_token_addrs = testing_utils::full_setup_erc20_address("zkLend Market proof-of-deposit ERC20", "zCOIN", zkLend_market_addrs);
-//     let pod_token_dispatcher = testing_utils::setup_erc20_dispatcher(proof_of_deposit_token_addrs);
+    // B: deployer le proof of deposit token - donner la supply au zklend market mock au deploiement.
+    let proof_of_deposit_token_addrs = testing_utils::full_setup_erc20_address("zkLend Market proof-of-deposit ERC20", "zCOIN", zkLend_market_addrs);
+    let pod_token_dispatcher = testing_utils::setup_erc20_dispatcher(proof_of_deposit_token_addrs);
 
-//     // C: enregistrer dans le storage du zklend market mock l'addresse du proof of deposit token.
-//     let zkLend_market_dispatcher = IzkLendMarketDispatcher{ contract_address: zkLend_market_addrs };
-//     zkLend_market_dispatcher.set_proof_of_deposit_token(proof_of_deposit_token_addrs);
+    // C: enregistrer dans le storage du zklend market mock l'addresse du proof of deposit token.
+    let zkLend_market_dispatcher = IzkLendMarketDispatcher{ contract_address: zkLend_market_addrs };
+    zkLend_market_dispatcher.set_proof_of_deposit_token(proof_of_deposit_token_addrs);
 
-//     // STEP 2:
-//     // # declarer le state de tickets_handler (pour pouvoir utiliser les fonctions privées, dont "_deposit_on_zkLend()")
-//     let mut state = TicketsHandlerContract::contract_state_for_testing();
+    // STEP 2: tickets handler et underlying erc20 token
+    // #: deployer tickets handler contract -> utiliser une adresse random pour le underlying erc20
+    let mut calldata = array![];
+    let token_ids = ArrayTrait::<u256>::new().span();
 
-//     // # deployer le contrat tickets_handler - initialiser 'zklend_mkt_addrs',
-//     // et donner un contrat random pour 'underlying_asset' (car son contrat n'est pas encore deployé dans le contexte de ce test).
+    calldata.append_serde(NAME());
+    calldata.append_serde(SYMBOL());
+    calldata.append_serde(BASE_URI());
+    calldata.append_serde(OWNER());
+    calldata.append_serde(token_ids);
+    calldata.append_serde(OWNER());
+    calldata.append_serde(random_ERC20_token());
+    calldata.append_serde(TEN_WITH_6_DECIMALS);
+    calldata.append_serde(zkLend_market_addrs);
 
-//     let mut calldata = array![];
-//     let token_ids = ArrayTrait::<u256>::new().span();
+    let tickets_handler_addrs = utils::deploy(TicketsHandlerContract::TEST_CLASS_HASH, calldata);
+    let tickets_handler_dispatcher = TicketsHandlerABIDispatcher{ contract_address: tickets_handler_addrs };
 
-//     //TODO: ajouter les bonnes données dans 'calldata'
-//     calldata.append_serde(NAME());
-//     calldata.append_serde(SYMBOL());
-//     calldata.append_serde(BASE_URI());
-//     calldata.append_serde(OWNER());
-//     calldata.append_serde(token_ids);
-//     calldata.append_serde(OWNER());
-//     calldata.append_serde(random_ERC20_token());
-//     calldata.append_serde(TEN_WITH_6_DECIMALS);
-//     calldata.append_serde(zkLend_market_addrs);
+    // #: deployer un erc20 mock contract pour l'underlying asset -> donner supply initiale au tickets handler contract
+    let underlying_erc20_addrs = testing_utils::full_setup_erc20_address(
+        "some ERC20 token", "COIN", tickets_handler_addrs
+    );
+    let underlying_erc20_dispatcher = testing_utils::setup_erc20_dispatcher(underlying_erc20_addrs);
 
-//     let tickets_handler_addrs = utils::deploy(TicketsHandlerContract::TEST_CLASS_HASH, calldata);
-//     let tickets_handler_dispatcher = TicketsHandlerABIDispatcher{ contract_address: tickets_handler_addrs };
+    // #: assigner l'addresse de l'erc20 mock deployé en tant que underlying asset dans le state du tickets handler contract
+    let mut state = TicketsHandlerContract::contract_state_for_testing();
+    state.ticket._set_underlying_asset(underlying_erc20_addrs);
 
-//     assert_eq!(tickets_handler_dispatcher.underlying_erc20_asset(), random_ERC20_token()); // not needed
-//     assert_eq!(tickets_handler_dispatcher.get_zkLend_market_address(), zkLend_market_addrs); // not needed
-//     // assert_eq!(state.get_zkLend_market_address(), zkLend_market_addrs); //? <- although not needed, this test fails... weird because above tests do not fail!
+    // STEP 3: FAIRE TOUT UN TAS DE VERIFICATIONS AVANT D'UTILISER "_deposit_on_zkLend()"
+    // A: verifier que zklend_mkt_mock possede bien 10 "zCOIN"
+    let zklend_mkt_pod_token_balance_before = pod_token_dispatcher.balance_of(zkLend_market_addrs);
+    assert_eq!(zklend_mkt_pod_token_balance_before, TEN_WITH_6_DECIMALS);
+    // B: verifier que tickets_handler possede bien 10 "COIN"
+    let tickets_handler_underlying_asset_balance_before = underlying_erc20_dispatcher.balance_of(tickets_handler_addrs);
+    assert_eq!(tickets_handler_underlying_asset_balance_before, TEN_WITH_6_DECIMALS);
 
-//     // Update tickets_handler state with zkLend_market_address
-//     state._initializer(zkLend_market_addrs); //? <- this is needed, even though I have already deployed tickets_handler contract (see above)
-//     assert_eq!(state.get_zkLend_market_address(), zkLend_market_addrs); // not needed
+    // #: utiliser test__deposit_to_zkLend()
+    testing::set_contract_address(tickets_handler_addrs); //? note for self: "set_caller_address" doesnt work.
 
-//     // D: deployer le underlying_erc20 - donner la supply au tickets_handler au deploiement.
-//     let underlying_erc20_addrs = testing_utils::full_setup_erc20_address("some ERC20 token", "COIN", tickets_handler_addrs);
-//     let underlying_erc20_dispatcher = testing_utils::setup_erc20_dispatcher(underlying_erc20_addrs);
+    state._deposit_to_zkLend(underlying_erc20_addrs, TEN_WITH_6_DECIMALS);
 
-//     // E: enregistrer dans le storage du tickets_handler l'addresse du underlying erc20.
-//     // state.ticket.underlying_asset.write(underlying_erc20_addrs); //? I wish I knew why I can't use "storage.write()" here, or how to do it.
-//     state.ticket._set_underlying_asset(underlying_erc20_addrs);
-//     assert_eq!(state.ticket._underlying_erc20_asset(), underlying_erc20_addrs); // not needed
+    // #: verifier que zklend_mkt_mock possede bien 10 "COIN" et 0 "zCOIN" apres le deposit
+    let zklend_underlying_asset_balance_after = underlying_erc20_dispatcher.balance_of(zkLend_market_addrs);
+    assert_eq!(zklend_underlying_asset_balance_after, TEN_WITH_6_DECIMALS);
 
-//     // STEP 3: FAIRE TOUT UN TAS DE VERIFICATIONS AVANT D'UTILISER "_deposit_on_zkLend()"
-//     // A: verifier que zklend_mkt_mock possede bien 10 "zCOIN"
-//     let zklend_mkt_pod_token_balance_before = pod_token_dispatcher.balance_of(zkLend_market_addrs);
-//     assert_eq!(zklend_mkt_pod_token_balance_before, TEN_WITH_6_DECIMALS);
-//     // B: verifier que tickets_handler possede bien 10 "COIN"
-//     let tickets_handler_underlying_asset_balance_before = underlying_erc20_dispatcher.balance_of(tickets_handler_addrs);
-//     assert_eq!(tickets_handler_underlying_asset_balance_before, TEN_WITH_6_DECIMALS);
+    let zklend_mkt_pod_token_balance_after = pod_token_dispatcher.balance_of(zkLend_market_addrs);
+    assert_eq!(zklend_mkt_pod_token_balance_after, zklend_mkt_pod_token_balance_before - TEN_WITH_6_DECIMALS);
+    
+    // #: verifier que tickets_handler possede bien 10 "zCOIN" et 0 "COIN" apres le deposit
+    let tickets_handler_underlying_asset_balance_after = underlying_erc20_dispatcher.balance_of(tickets_handler_addrs);
+    assert_eq!(tickets_handler_underlying_asset_balance_after, tickets_handler_underlying_asset_balance_before - TEN_WITH_6_DECIMALS);
 
-//     // STEP 4:
+    let tickets_handler_pod_token_balance_after = pod_token_dispatcher.balance_of(tickets_handler_addrs);
+    assert_eq!(tickets_handler_pod_token_balance_after, TEN_WITH_6_DECIMALS);
 
-//     // Set caller as `TicketsHandlerContract`
-//     testing::set_contract_address(tickets_handler_addrs);
-//     // testing::set_caller_address(tickets_handler_addrs); //? does this also work?
+    // #: verifier que zklend market ne soit plus "allowed"
+    assert_eq!(
+        underlying_erc20_dispatcher.allowance(tickets_handler_addrs, zkLend_market_addrs),
+        0
+    );
 
-//     // A: utiliser la fonction "_deposit_on_zkLend()"
-//     state._deposit_on_zkLend(TEN_WITH_6_DECIMALS);
-
-//     // B: verifier que zklend_mkt_mock possede bien 10 "COIN" et 0 "zCOIN"
-
-//     // C: verifier que tickets_handler possede bien 10 "zCOIN" et 0 "COIN"
+    //! add test(s) with Events?
 
 }
 
