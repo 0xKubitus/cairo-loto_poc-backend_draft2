@@ -4,10 +4,10 @@ use starknet::ContractAddress;
 trait IzkLendMarket<TState> {
     fn set_proof_of_deposit_token(ref self: TState, token: ContractAddress);
     fn get_proof_of_deposit_token(self: @TState) -> ContractAddress;
-    
+
     fn deposit(ref self: TState, token: ContractAddress, amount: felt252);
     // fn withdraw(ref self: TState, token: ContractAddress, amount: felt252);
-    
+
     fn get_deposit_value_of(self: @TState, user: ContractAddress) -> u256;
 }
 
@@ -56,7 +56,9 @@ mod zkLendMarketMock {
 
         // Send `amount` of `zkLend_proof_of_deposit` from this contract to the caller
         let proof_of_deposit_token = self.proof_of_deposit_token_addrs.read();
-        let zklend_PoD_erc20_dispatcher = IERC20Dispatcher { contract_address: proof_of_deposit_token };
+        let zklend_PoD_erc20_dispatcher = IERC20Dispatcher {
+            contract_address: proof_of_deposit_token
+        };
         zklend_PoD_erc20_dispatcher.transfer(caller, u256_amount);
 
         // Update Storage state with the amount of the caller's deposit

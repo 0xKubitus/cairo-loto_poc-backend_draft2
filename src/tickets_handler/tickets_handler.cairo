@@ -150,6 +150,7 @@ mod TicketsHandlerContract {
             //! Create a private function for depositing a given
             //! erc20 "asset" and "amount".
             //! -> implement unit test of this private function
+            // self._make_zklend_deposit(underlying_erc20, ticket_value);
 
             //! Step 2:
             // use the newly created private function to deposit
@@ -265,40 +266,45 @@ mod TicketsHandlerContract {
             self.ticket._decrease_circulating_supply();
         }
 
-        /// Deposits given amount of `underlying_asset` from this contract into matching erc20 vault from zkLend
-        fn _deposit_on_zkLend(ref self: ContractState, amount: u256) {
-            // TODO: MAKE THIS FUNCTION'S TEST SUCCESSFULLY PASS!!! ("fn test__deposit_on_zkLend()")
-            // Step 1: allow "zkLend Market" contract to
-            // spend given amount of the `underlying_asset` from this contract
-            let underlying_asset: ContractAddress = self.ticket.underlying_asset.read();
-            let zkLend_market: ContractAddress = self.zkLend_mkt_addrs.read();
+        fn _approve_zkLend_for(ref self: ContractState, erc20_asset: ContractAddress, amount: u256) {
+            let zkLend_market = self.zkLend_mkt_addrs.read();
+            let erc20_dispatcher = IERC20Dispatcher { contract_address: erc20_asset };
 
-            let erc20_dispatcher = IERC20Dispatcher { contract_address: underlying_asset };
             erc20_dispatcher.approve(zkLend_market, amount);
-
-            // assert(erc20_dispatcher.allowance(get_contract_address(), zkLend_market) == amount, 'approval error'); // not mandatory
-
-            // Step 2: Make a deposit of the given amount
-            // of `underlying_asset` into zkLend Market contract
-            //? zkLend's contract uses felt252 (not u256) to manage amounts.
-            let felt_amount: felt252 = amount.try_into().unwrap();
-            let zkLend_dispatcher = IzkLendMarketDispatcher { contract_address: zkLend_market };
-
-            // =================================================================
-            // everything above does not trigger any error
-            zkLend_dispatcher.deposit(underlying_asset, felt_amount);
-        // =================================================================
-
-        ////////////////////////////////////////////////////////////////////
-        //? Step 3: (optionnal - only to be used for "degen" vaults)
-        // Enable ETH as collateral and create a leveraged position
-        // by lending the deposited ETH and borrowing a fraction
-        // of the deposit to lend it again -> TO BE IMPLEMENTED LATER ON
-        // zkLend_market_dispatcher.borrow(underlying_asset, felt_borrow_amount);
-        ////////////////////////////////////////////////////////////////////
+            assert(erc20_dispatcher.allowance(get_contract_address(), zkLend_market) == amount, 'approval error'); // not mandatory
         }
 
+        // /// Deposits given amount of `underlying_asset` from this contract into matching erc20 vault from zkLend.
+        // /// to use this function, the 
+        // fn _make_zklend_deposit(ref self: ContractState, erc20_asset: ContractAddress, amount: u256) {
+        //     // TODO: MAKE THIS FUNCTION'S TEST SUCCESSFULLY PASS!!! ("fn test__deposit_on_zkLend()")
+        //     // Step 1: allow "zkLend Market" contract to
+        //     // spend given amount of the `underlying_asset` from this contract
+        //     let zkLend_market: ContractAddress = self.zkLend_mkt_addrs.read();
+
+        //     // Step 2: Make a deposit of the given amount
+        //     // of `underlying_asset` into zkLend Market contract
+        //     //? zkLend's contract uses felt252 (not u256) to manage amounts.
+        //     let felt_amount: felt252 = amount.try_into().unwrap();
+        //     let zkLend_dispatcher = IzkLendMarketDispatcher { contract_address: zkLend_market };
+
+        //     // =================================================================
+        //     // everything above does not trigger any error
+        //     zkLend_dispatcher.deposit(erc20_asset, felt_amount);
+        // // =================================================================
+
+        // ////////////////////////////////////////////////////////////////////
+        // //? Step 3: (optionnal - only to be used for "degen" vaults)
+        // // Enable ETH as collateral and create a leveraged position
+        // // by lending the deposited ETH and borrowing a fraction
+        // // of the deposit to lend it again -> TO BE IMPLEMENTED LATER ON
+        // // zkLend_market_dispatcher.borrow(underlying_asset, felt_borrow_amount);
+        // ////////////////////////////////////////////////////////////////////
+        // }
+
         /// Withdraws given amount of `underlying_asset` from this contract into matching erc20 vault from zkLend
-        fn _withdraw_from_zkLend(ref self: ContractState, amount: u256) {}
+        fn _withdraw_from_zkLend(ref self: ContractState, amount: u256) {
+            // (...)
+        }
     }
 }

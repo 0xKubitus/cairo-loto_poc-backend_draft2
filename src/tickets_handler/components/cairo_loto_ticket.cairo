@@ -61,7 +61,9 @@ pub mod CairoLotoTicketComponent {
         }
 
         // not tested yet (but come on)
-        fn _set_underlying_asset(ref self: ComponentState<TContractState>, asset: ContractAddress,) {
+        fn _set_underlying_asset(
+            ref self: ComponentState<TContractState>, asset: ContractAddress,
+        ) {
             self.underlying_asset.write(asset);
         }
 
