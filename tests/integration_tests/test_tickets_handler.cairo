@@ -41,7 +41,7 @@ use starknet::{ContractAddress,};
 //     //step 1
 //     // deployer un ERC20Mock = "token A" et donner la supply à "OWNER"
 //     let underlying_erc20_addrs = full_setup_erc20_address("USDC contract", "USDC", OWNER());
-//     let token_A_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs, OWNER());
+//     let token_A_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs);
 //     // verifier deploiement
 //     let owner_tokenA_balance_before = token_A_dispatcher.balance_of(OWNER());
 //     assert_eq!(owner_tokenA_balance_before, TEN_WITH_6_DECIMALS);
@@ -55,7 +55,7 @@ use starknet::{ContractAddress,};
 //     //step 3
 //     // deployer un 2eme ERC20Mock => fake zUSDC et donner la supply au zkLendMarketMock contrat
 //     let zklend_PoD_token_addrs = full_setup_erc20_address( "zkLend USDC proof of deposit", "zUSDC", zklend_market_addrs );
-//     let token_B_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs, OWNER());
+//     let token_B_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs);
 
 //     //step 4
 //     // deployer tickets_handler
@@ -95,7 +95,7 @@ use starknet::{ContractAddress,};
 #[test]
 fn test_mint() {
     let underlying_erc20_addrs = light_setup_erc20_address(OWNER());
-    let underlying_erc20_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs, OWNER());
+    let underlying_erc20_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs);
     // NOTE FOR SELF: below line also works (".contract_address")
     // let underlying_erc20_addrs = underlying_erc20_dispatcher.contract_address;
 
@@ -130,7 +130,7 @@ fn test_mint() {
 #[should_panic]
 fn test_try_mint_11th_ticket() {
     let underlying_erc20_addrs = light_setup_erc20_address(OWNER());
-    let underlying_erc20_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs, OWNER());
+    let underlying_erc20_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs);
 
     let batch_mint_IDs: Array<u256> = array![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     let tickets_handler_dispatcher = ticket_dispatcher_with_event_bis(
@@ -168,7 +168,7 @@ fn test_try_mint_without_erc20_allowance() {
 #[should_panic]
 fn test_try_mint_with_smaller_allowance() {
     let underlying_erc20_addrs = light_setup_erc20_address(OWNER());
-    let underlying_erc20_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs, OWNER());
+    let underlying_erc20_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs);
 
     let batch_mint_IDs: Array<u256> = array![1, 2, 3,];
     let tickets_handler_dispatcher = ticket_dispatcher_with_event_bis(
@@ -189,7 +189,7 @@ fn test_try_mint_with_smaller_allowance() {
 #[test]
 fn test_mint_and_burn() {
     let underlying_erc20_addrs = light_setup_erc20_address(OWNER());
-    let underlying_erc20_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs, OWNER());
+    let underlying_erc20_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs);
 
     let tickets_handler_dispatcher = setup_ticket_dispatcher(underlying_erc20_addrs);
     let tickets_handler_addrs = tickets_handler_dispatcher.contract_address;
@@ -221,7 +221,7 @@ fn test_mint_and_burn() {
 #[should_panic]
 fn test_try_burn_wrong_ticket() {
     let underlying_erc20_addrs = light_setup_erc20_address(OWNER());
-    let underlying_erc20_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs, OWNER());
+    let underlying_erc20_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs);
 
     let tickets_handler_dispatcher = setup_ticket_dispatcher(underlying_erc20_addrs);
     let tickets_handler_addrs = tickets_handler_dispatcher.contract_address;
@@ -247,7 +247,7 @@ fn test_try_burn_wrong_ticket() {
 fn test_try_burn_not_owner() {
     // Deploy an ERC20 contract that transfers the initial supply to "OTHER"
     let underlying_erc20_addrs = light_setup_erc20_address(OTHER());
-    let underlying_erc20_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs, OTHER());
+    let underlying_erc20_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs);
 
     // Deploy TicketsHandlerContract with ERC20 as the `underlying_asset` and mint 1 ticket to "OWNER"
     let batch_mint_IDs: Array<u256> = array![1, 2, 3];

@@ -176,11 +176,12 @@ fn full_setup_erc20_address(
     address
 }
 
-fn setup_erc20_dispatcher(
-    token_address: ContractAddress, recipient: ContractAddress
-) -> IERC20Dispatcher {
+fn setup_erc20_dispatcher(token_address: ContractAddress) -> IERC20Dispatcher {
     let erc20_dispatcher = IERC20Dispatcher { contract_address: token_address };
 
+    //? there's probably something wrong below because I copy/pasted the process 
+    //? for setting up an erc721 but erc20 constructor is different and does not use token_ids nor tokens_len...
+    //? => I suppose dropping a single a event should be enough ->     utils::drop_events(erc20_dispatcher.contract_address, 1);
     utils::drop_events(erc20_dispatcher.contract_address, TOKENS_LEN.try_into().unwrap() + 1);
 
     erc20_dispatcher
