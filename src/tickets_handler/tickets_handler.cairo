@@ -223,7 +223,7 @@ mod TicketsHandlerContract {
             self.zkLend_mkt_addrs.write(zkLend_market_addrs);
         }
 
-        /// Mints `token_ids` to `recipient`.
+        /// Batch-Minting `token_ids` to `recipient`.
         fn _mint_assets(
             ref self: ContractState, recipient: ContractAddress, mut token_ids: Span<u256>
         ) {
@@ -274,33 +274,30 @@ mod TicketsHandlerContract {
             assert(erc20_dispatcher.allowance(get_contract_address(), zkLend_market) == amount, 'approval error'); // not mandatory
         }
 
-        // /// Deposits given amount of `underlying_asset` from this contract into matching erc20 vault from zkLend.
-        // /// to use this function, the 
-        // fn _make_zklend_deposit(ref self: ContractState, erc20_asset: ContractAddress, amount: u256) {
-        //     // TODO: MAKE THIS FUNCTION'S TEST SUCCESSFULLY PASS!!! ("fn test__deposit_on_zkLend()")
-        //     // Step 1: allow "zkLend Market" contract to
-        //     // spend given amount of the `underlying_asset` from this contract
-        //     let zkLend_market: ContractAddress = self.zkLend_mkt_addrs.read();
+        /// Deposits given amount of `underlying_asset` from this contract into matching erc20 vault from zkLend.
+        fn _deposit_to_zkLend(ref self: ContractState, erc20_asset: ContractAddress, amount: u256) {
+            // TODO: MAKE THIS FUNCTION'S TEST SUCCESSFULLY PASS!!! ("fn test__deposit_to_zkLend()")
+            // Step 1: allow "zkLend Market" contract to
+            // spend given amount of the `underlying_asset` from this contract
+            self._approve_zkLend_for(erc20_asset, amount);
+            
+            // Step 2: Make a deposit of the given amount
+            // of `underlying_asset` into zkLend Market contract
+            let zkLend_market: ContractAddress = self.zkLend_mkt_addrs.read();
+            let zkLend_dispatcher = IzkLendMarketDispatcher { contract_address: zkLend_market };
+            // zkLend's contract uses felt252 (not u256) to manage amounts ->
+            let felt_amount: felt252 = amount.try_into().unwrap();
 
-        //     // Step 2: Make a deposit of the given amount
-        //     // of `underlying_asset` into zkLend Market contract
-        //     //? zkLend's contract uses felt252 (not u256) to manage amounts.
-        //     let felt_amount: felt252 = amount.try_into().unwrap();
-        //     let zkLend_dispatcher = IzkLendMarketDispatcher { contract_address: zkLend_market };
+            zkLend_dispatcher.deposit(erc20_asset, felt_amount);
 
-        //     // =================================================================
-        //     // everything above does not trigger any error
-        //     zkLend_dispatcher.deposit(erc20_asset, felt_amount);
-        // // =================================================================
-
-        // ////////////////////////////////////////////////////////////////////
-        // //? Step 3: (optionnal - only to be used for "degen" vaults)
-        // // Enable ETH as collateral and create a leveraged position
-        // // by lending the deposited ETH and borrowing a fraction
-        // // of the deposit to lend it again -> TO BE IMPLEMENTED LATER ON
-        // // zkLend_market_dispatcher.borrow(underlying_asset, felt_borrow_amount);
-        // ////////////////////////////////////////////////////////////////////
-        // }
+            ////////////////////////////////////////////////////////////////////
+            //? Step 3: (optionnal - only to be used for "degen" vaults in later versions)
+            // Enable ETH as collateral and create a leveraged position
+            // by lending the deposited ETH and borrowing a fraction
+            // of the deposit to lend it again -> TO BE IMPLEMENTED LATER ON
+            // zkLend_market_dispatcher.borrow(underlying_asset, felt_borrow_amount);
+            ////////////////////////////////////////////////////////////////////
+        }
 
         /// Withdraws given amount of `underlying_asset` from this contract into matching erc20 vault from zkLend
         fn _withdraw_from_zkLend(ref self: ContractState, amount: u256) {

@@ -178,15 +178,17 @@ fn test__approve_zkLend_for() {
 }
 
 
-// #[test]
-// fn test__deposit_on_zkLend() {
-//     // STEP 1:
-//     // A: deployer zklend market mock - sans initialiser l'addresse du proof of deposit token dans le storage au deploiement.
-//     let no_calldata = array![];
-//     let zkLend_market_addrs = utils::deploy(zkLendMarketMock::TEST_CLASS_HASH, no_calldata);
+#[test]
+fn test__deposit_to_zkLend() {
+    // STEP 1:
+    // A: deployer zklend market mock - sans initialiser l'addresse du proof of deposit token dans le storage au deploiement.
+    let no_calldata = array![];
+    let zkLend_market_addrs = utils::deploy(zkLendMarketMock::TEST_CLASS_HASH, no_calldata);
+
 //     // B: deployer le proof of deposit token - donner la supply au zklend market mock au deploiement.
 //     let proof_of_deposit_token_addrs = testing_utils::full_setup_erc20_address("zkLend Market proof-of-deposit ERC20", "zCOIN", zkLend_market_addrs);
 //     let pod_token_dispatcher = testing_utils::setup_erc20_dispatcher(proof_of_deposit_token_addrs);
+
 //     // C: enregistrer dans le storage du zklend market mock l'addresse du proof of deposit token.
 //     let zkLend_market_dispatcher = IzkLendMarketDispatcher{ contract_address: zkLend_market_addrs };
 //     zkLend_market_dispatcher.set_proof_of_deposit_token(proof_of_deposit_token_addrs);
@@ -253,7 +255,8 @@ fn test__approve_zkLend_for() {
 
 //     // C: verifier que tickets_handler possede bien 10 "zCOIN" et 0 "COIN"
 
-// }
+}
+
 
 //
 // TEST EXTERNAL FUNCTIONS
