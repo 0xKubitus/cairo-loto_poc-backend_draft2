@@ -60,6 +60,11 @@ pub mod CairoLotoTicketComponent {
             self.value.write(ticket_value);
         }
 
+        // not tested yet (but come on)
+        fn _set_underlying_asset(ref self: ComponentState<TContractState>, asset: ContractAddress,) {
+            self.underlying_asset.write(asset);
+        }
+
         fn _underlying_erc20_asset(self: @ComponentState<TContractState>) -> ContractAddress {
             self.underlying_asset.read()
         }

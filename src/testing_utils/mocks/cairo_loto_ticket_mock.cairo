@@ -8,7 +8,7 @@ pub mod CairoLotoTicketMock {
     };
     use cairo_loto_poc::tickets_handler::components::cairo_loto_ticket::CairoLotoTicketComponent::TicketInternalTrait;
     // use cairo_loto_poc::testing_utils;
-    use cairo_loto_poc::testing_utils::constants::{TEN_WITH_6_DECIMALS, fake_ERC20_asset,};
+    use cairo_loto_poc::testing_utils::constants::{TEN_WITH_6_DECIMALS, random_ERC20_token,};
     use starknet::ContractAddress;
     use starknet::{contract_address_const,};
 
@@ -46,7 +46,7 @@ pub mod CairoLotoTicketMock {
 
     #[constructor]
     fn constructor(ref self: ContractState, underlying_asset: ContractAddress,) {
-        // let asset: ContractAddress = fake_ERC20_asset();
+        // let asset: ContractAddress = random_ERC20_token();
         let ticket_value: u256 = TEN_WITH_6_DECIMALS;
 
         self.cairo_loto_ticket.initializer(underlying_asset, ticket_value);

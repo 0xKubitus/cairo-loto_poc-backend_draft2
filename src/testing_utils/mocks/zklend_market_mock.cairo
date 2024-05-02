@@ -16,7 +16,7 @@ trait IzkLendMarket<TState> {
 mod zkLendMarketMock {
     // use super::IzkLendMarket;
     use super::{IzkLendMarket, IzkLendMarketDispatcher, IzkLendMarketDispatcherTrait};
-    use cairo_loto_poc::testing_utils::constants::{fake_ERC20_asset,};
+    use cairo_loto_poc::testing_utils::constants::{random_ERC20_token,};
     use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait,};
     use starknet::{ContractAddress, get_caller_address, get_contract_address,};
 

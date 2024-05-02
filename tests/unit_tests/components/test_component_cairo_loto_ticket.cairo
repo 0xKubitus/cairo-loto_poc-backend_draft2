@@ -6,7 +6,7 @@ use cairo_loto_poc::tickets_handler::components::cairo_loto_ticket::{
     ICairoLotoTicket, ICairoLotoTicketDispatcher, ICairoLotoTicketDispatcherTrait,
 };
 use cairo_loto_poc::testing_utils::mocks::cairo_loto_ticket_mock::CairoLotoTicketMock;
-use cairo_loto_poc::testing_utils::constants::{TEN_WITH_6_DECIMALS, ETH_ADDRS, fake_ERC20_asset,};
+use cairo_loto_poc::testing_utils::constants::{TEN_WITH_6_DECIMALS, ETH_ADDRS, random_ERC20_token,};
 use openzeppelin::tests::utils;
 use openzeppelin::utils::serde::{SerializedAppend,};
 use openzeppelin::tests::utils::constants::{OWNER, OTHER,};
@@ -29,7 +29,7 @@ fn setup_eth_ticket() -> ICairoLotoTicketDispatcher {
 }
 fn fake_erc20_ticket_setup() -> ICairoLotoTicketDispatcher {
     let mut calldata = array![];
-    calldata.append_serde(fake_ERC20_asset());
+    calldata.append_serde(random_ERC20_token());
 
     testing::set_contract_address(OWNER());
     //? using `set_contract_address` in a test will indicate
@@ -48,7 +48,7 @@ fn fake_erc20_ticket_setup() -> ICairoLotoTicketDispatcher {
 fn test_mock_constructor() {
     let ticket_component = fake_erc20_ticket_setup();
 
-    assert_eq!(ticket_component.underlying_erc20_asset(), fake_ERC20_asset());
+    assert_eq!(ticket_component.underlying_erc20_asset(), random_ERC20_token());
     assert_eq!(ticket_component.ticket_value(), TEN_WITH_6_DECIMALS);
 }
 
@@ -111,16 +111,16 @@ fn test_initializer() {
 fn test__underlying_erc20_asset() {
     let mut ticket_cmpnt: TestingState = Default::default();
 
-    ticket_cmpnt.initializer(fake_ERC20_asset(), TEN_WITH_6_DECIMALS);
+    ticket_cmpnt.initializer(random_ERC20_token(), TEN_WITH_6_DECIMALS);
 
-    assert_eq!(ticket_cmpnt._underlying_erc20_asset(), fake_ERC20_asset());
+    assert_eq!(ticket_cmpnt._underlying_erc20_asset(), random_ERC20_token());
 }
 
 #[test]
 fn test__ticket_value() {
     let mut ticket_cmpnt: TestingState = Default::default();
 
-    ticket_cmpnt.initializer(fake_ERC20_asset(), TEN_WITH_6_DECIMALS);
+    ticket_cmpnt.initializer(random_ERC20_token(), TEN_WITH_6_DECIMALS);
 
     assert_eq!(ticket_cmpnt._ticket_value(), TEN_WITH_6_DECIMALS);
 }

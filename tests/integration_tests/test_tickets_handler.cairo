@@ -17,7 +17,7 @@ use cairo_loto_poc::testing_utils::{
 };
 use cairo_loto_poc::testing_utils::constants::{
     TOKEN_1, TOKEN_2, TOKEN_3, TOKENS_LEN, TEN_WITH_6_DECIMALS, ETH_ADDRS, SOME_ERC20, COIN,
-    fake_ERC20_asset, ZKLEND_MKT_ADDRS,
+    random_ERC20_token, ZKLEND_MKT_ADDRS,
 };
 use openzeppelin::tests::utils::constants::{
     ZERO, DATA, OWNER, SPENDER, RECIPIENT, OTHER, NAME, SYMBOL, BASE_URI,
