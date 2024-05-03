@@ -12,6 +12,9 @@ use cairo_loto_poc::tickets_handler::tickets_handler::TicketsHandlerContract;
 use cairo_loto_poc::tickets_handler::interface::{
     TicketsHandlerABIDispatcher, TicketsHandlerABIDispatcherTrait,
 };
+use cairo_loto_poc::testing_utils::mocks::zklend_market_mock::{
+    zkLendMarketMock, IzkLendMarketDispatcher, IzkLendMarketDispatcherTrait,
+};
 use cairo_loto_poc::testing_utils::constants::{
     TOKEN_1, TOKEN_2, TOKEN_3, TOKENS_LEN, NONEXISTENT, TEN_WITH_6_DECIMALS, ETH_ADDRS,
     ZKLEND_MKT_ADDRS, SOME_ERC20, COIN,
@@ -234,5 +237,25 @@ fn setup_ticket_dispatcher(erc20_addrs: ContractAddress) -> TicketsHandlerABIDis
     let dispatcher = ticket_dispatcher_with_event(erc20_addrs);
     // `OwnershipTransferred` + `Transfer`s
     utils::drop_events(dispatcher.contract_address, TOKENS_LEN.try_into().unwrap() + 1);
+    dispatcher
+}
+
+fn setup_ticket_dispatcher_bis(batch_mint_IDs: Array<u256>, erc20_addrs: ContractAddress, zklend_mkt_addrs: ContractAddress,) -> TicketsHandlerABIDispatcher {
+    let dispatcher = ticket_dispatcher_with_event_bis(batch_mint_IDs, erc20_addrs, zklend_mkt_addrs);
+    // `OwnershipTransferred` + `Transfer`s
+    utils::drop_events(dispatcher.contract_address, TOKENS_LEN.try_into().unwrap() + 1);
+    dispatcher
+}
+
+fn setup_zkLend_market_mock_address() -> ContractAddress {
+    let no_calldata = array![];
+    let zkLend_market_addrs = utils::deploy(zkLendMarketMock::TEST_CLASS_HASH, no_calldata);
+    zkLend_market_addrs
+}
+
+fn setup_zkLend_market_mock_dispatcher(address: ContractAddress) -> IzkLendMarketDispatcher {
+    let dispatcher = IzkLendMarketDispatcher{ contract_address: address };
+    // `OwnershipTransferred` + `Transfer`s
+    utils::drop_events(dispatcher.contract_address, TOKENS_LEN.try_into().unwrap() + 1); //? most likely incorect? but is it even useful/necessary?
     dispatcher
 }

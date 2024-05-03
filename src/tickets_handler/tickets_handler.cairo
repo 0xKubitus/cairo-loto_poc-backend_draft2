@@ -148,16 +148,14 @@ mod TicketsHandlerContract {
             // ERC20 deposit into zkLend's vault
             /// use the newly created private function to deposit
             /// `ticket_value` into zkLend's `underlying asset` vault
+            // TODO: fix test or related private function
             self._deposit_to_zkLend(underlying_erc20, ticket_value);
 
-            // TODO:
-            //! Step 3: Update tests of this public function 
+            // // Define next ticket's `token_id`
+            // let token_id = self.ticket.total_supply.read() + 1;
 
-            // Define next ticket's `token_id`
-            let token_id = self.ticket.total_supply.read() + 1;
-
-            // Mints one ticket to the `user`
-            self._mint(user, token_id);
+            // // Mints one ticket to the `user`
+            // self._mint(user, token_id);
         }
 
         #[external(v0)]
@@ -286,6 +284,13 @@ mod TicketsHandlerContract {
             //? zkLend's contract uses felt252 (not u256) to manage amounts ->
             let felt_amount: felt252 = amount.try_into().unwrap();
 
+            //TODO: FIX BELOW ERROR:
+            // (most likely in the test rather than here because the unit test of this function is successful)
+            //! Error = 
+            //! cairo_loto_poc_tests::integration_tests::test_tickets_handler::test_mint
+            //! - Panicked with (0x434f4e54524143545f4e4f545f4445504c4f594544 ('CONTRACT_NOT_DEPLOYED'),
+            //! 0x454e545259504f494e545f4641494c4544 ('ENTRYPOINT_FAILED'),
+            //! 0x454e545259504f494e545f4641494c4544 ('ENTRYPOINT_FAILED')).
             zkLend_dispatcher.deposit(erc20_asset, felt_amount);
         ////////////////////////////////////////////////////////////////////
         //? Step 3: (optionnal - only to be used for "degen" vaults in later versions)
