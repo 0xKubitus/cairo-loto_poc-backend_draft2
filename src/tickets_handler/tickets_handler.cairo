@@ -24,6 +24,7 @@ mod TicketsHandlerContract {
         CairoLotoTicketComponent, ICairoLotoTicket
     };
     use cairo_loto_poc::tickets_handler::components::cairo_loto_ticket::CairoLotoTicketComponent::TicketInternalTrait;
+    // use cairo_loto_poc::testing_utils::mocks::ztoken_mock::{IzTOKENMock, IzTOKENMockDispatcher, IzTOKENMockDispatcherTrait};
     use openzeppelin::access::ownable::ownable::OwnableComponent::InternalTrait;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::introspection::src5::SRC5Component;
@@ -31,8 +32,7 @@ mod TicketsHandlerContract {
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
     use openzeppelin::upgrades::UpgradeableComponent;
     use openzeppelin::upgrades::interface::IUpgradeable;
-    use super::IzkLendMarket;
-    use super::{IzkLendMarketDispatcher, IzkLendMarketDispatcherTrait};
+    use super::{IzkLendMarket, IzkLendMarketDispatcher, IzkLendMarketDispatcherTrait};
     use starknet::{ContractAddress, ClassHash};
     use starknet::{get_caller_address, get_contract_address};
     use core::option::OptionTrait;
@@ -157,27 +157,31 @@ mod TicketsHandlerContract {
             self._mint(user, token_id);
         }
 
+        /// Withdraws one ticket's `underlying_asset` and `value` from zkLend market to a given recipient,
+        /// then burns the given ticket/token_id (caller must be ticket's owner or approved_for_all)
         #[external(v0)]
-        fn burn(ref self: ContractState, token_id: u256) {
-            // TODO: Implementing ERC20 withdrawal from zkLend's vault
-            //! Step 1:
-            //! Create a private function withdrawing a given erc20 "asset" and "amount".
-            //! => implement unit test of this private function
+        fn burn(ref self: ContractState, token_id: u256, recipient: ContractAddress) {
+            let underlying_erc20 = self.ticket.underlying_asset.read();
+            let ticket_value = self.ticket.value.read();
+            let felt_value: felt252 = ticket_value.try_into().unwrap(); // this is necessary because
 
-            //! Step 2:
-            // use the newly created private function 
-
-            //! Step 3:
-            // Update tests of this public function 
-
-            // Destroy ticket
+            //! IS IT MANDATORY TO CREATE A PRIVATE FUNCTION FOR THIS? (IF SO, WHY EXACTLY?)
+            //! ----------------------------------------------------------------
+            // underlying asset withdrawal from zkLend's vault
+            let zkLend_dispatcher = IzkLendMarketDispatcher{contract_address: self.get_zkLend_market_address()};
+            zkLend_dispatcher.withdraw(underlying_erc20, felt_value);
+            //! ----------------------------------------------------------------
+            
+            // Destroy given ticket
             self._burn(token_id);
-            // Send deposit back to the `caller`
-            IERC20Dispatcher { contract_address: self.ticket.underlying_asset.read() }
-                .transfer(get_caller_address(), self.ticket.value.read());
+            
+            // Send deposit back to the `recipient` (not hardcoded as `caller` for more flexibility)
+            IERC20Dispatcher { contract_address: underlying_erc20 }.transfer(recipient, ticket_value);
+            
+            
+            // TODO: Update tests of this public function
         }
-        //! Step 4: CONVERT THE ABOVE FUNCTION SO THAT THE USER IS NOT NECESSARILY THE CALLER
-        //!   -->   fn burn(ref self: ContractState, token_id: u256,) {...}
+
 
         #[external(v0)]
         fn get_zkLend_market_address(self: @ContractState) -> ContractAddress {

@@ -6,7 +6,7 @@ trait IzkLendMarket<TState> {
     fn get_proof_of_deposit_token(self: @TState) -> ContractAddress;
 
     fn deposit(ref self: TState, token: ContractAddress, amount: felt252);
-    // fn withdraw(ref self: TState, token: ContractAddress, amount: felt252);
+    fn withdraw(ref self: TState, token: ContractAddress, amount: felt252);
 
     fn get_deposit_value_of(self: @TState, user: ContractAddress) -> u256;
 }
@@ -14,8 +14,9 @@ trait IzkLendMarket<TState> {
 
 #[starknet::contract]
 mod zkLendMarketMock {
-    // use super::IzkLendMarket;
-    use super::{IzkLendMarket, IzkLendMarketDispatcher, IzkLendMarketDispatcherTrait};
+    use core::traits::Into;
+use super::{IzkLendMarket, IzkLendMarketDispatcher, IzkLendMarketDispatcherTrait};
+    use cairo_loto_poc::testing_utils::mocks::ztoken_mock::{IzTOKENMock, IzTOKENMockDispatcher, IzTOKENMockDispatcherTrait};
     use cairo_loto_poc::testing_utils::constants::{random_ERC20_token,};
     use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait,};
     use starknet::{ContractAddress, get_caller_address, get_contract_address,};
@@ -64,4 +65,26 @@ mod zkLendMarketMock {
         // Update Storage state with the amount of the caller's deposit
         self.deposit_value.write(caller, u256_amount);
     }
+
+    //! NOTE FOR SELF => Note that my mock implementation of zklend market and
+    //! zTOKEN contracts requires the caller to approve zklend market to spend
+    //! their zTOKENs for withdrawal to work.
+    //!
+    //! However, that seems not to be required with the real zkLend Market
+    //! contract deployed on mainnet.
+    #[external(v0)]
+    fn withdraw(ref self: ContractState, token: ContractAddress, amount: felt252) {
+        let zTOKEN_addrs = self.proof_of_deposit_token_addrs.read();
+        let u256_amount: u256 = amount.into();
+        let tickets_handler = get_caller_address();
+        
+        // Burn `amount` of `zkLend_proof_of_deposit` from the tickets_handler contract ( = caller)
+        let zTOKEN_dispatcher = IzTOKENMockDispatcher{ contract_address: zTOKEN_addrs };
+        zTOKEN_dispatcher.burn(tickets_handler, u256_amount);
+
+        // Send `amount` of `erc20_token` from this contract to the tickets_handler
+        let erc20_dispatcher = IERC20Dispatcher {contract_address: token };
+        erc20_dispatcher.transfer(tickets_handler, u256_amount);
+    }
+
 }
