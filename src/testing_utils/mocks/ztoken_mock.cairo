@@ -48,5 +48,4 @@ mod zTOKENMock {
     fn burn(ref self: ContractState, user: ContractAddress, amount: u256) {
         self.erc20._burn(user, amount);
     }
-
 }

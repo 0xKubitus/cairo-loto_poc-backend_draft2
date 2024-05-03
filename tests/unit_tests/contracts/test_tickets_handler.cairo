@@ -270,7 +270,6 @@ fn test__deposit_to_zkLend() {
     assert_eq!(
         underlying_erc20_dispatcher.allowance(tickets_handler_addrs, zkLend_market_addrs), 0
     );
-    
 //! add test(s) with Events?
 
 }

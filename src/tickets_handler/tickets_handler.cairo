@@ -168,18 +168,19 @@ mod TicketsHandlerContract {
             //! IS IT MANDATORY TO CREATE A PRIVATE FUNCTION FOR THIS? (IF SO, WHY EXACTLY?)
             //! ----------------------------------------------------------------
             // underlying asset withdrawal from zkLend's vault
-            let zkLend_dispatcher = IzkLendMarketDispatcher{contract_address: self.get_zkLend_market_address()};
+            let zkLend_dispatcher = IzkLendMarketDispatcher {
+                contract_address: self.get_zkLend_market_address()
+            };
             zkLend_dispatcher.withdraw(underlying_erc20, felt_value);
             //! ----------------------------------------------------------------
-            
+
             // Destroy given ticket
             self._burn(token_id);
-            
+
             // Send deposit back to the `recipient` (not hardcoded as `caller` for more flexibility)
-            IERC20Dispatcher { contract_address: underlying_erc20 }.transfer(recipient, ticket_value);
-            
-            
-            // TODO: Update tests of this public function
+            IERC20Dispatcher { contract_address: underlying_erc20 }
+                .transfer(recipient, ticket_value);
+        // TODO: Update tests of this public function
         }
 
 

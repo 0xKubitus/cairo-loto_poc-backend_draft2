@@ -15,8 +15,10 @@ trait IzkLendMarket<TState> {
 #[starknet::contract]
 mod zkLendMarketMock {
     use core::traits::Into;
-use super::{IzkLendMarket, IzkLendMarketDispatcher, IzkLendMarketDispatcherTrait};
-    use cairo_loto_poc::testing_utils::mocks::ztoken_mock::{IzTOKENMock, IzTOKENMockDispatcher, IzTOKENMockDispatcherTrait};
+    use super::{IzkLendMarket, IzkLendMarketDispatcher, IzkLendMarketDispatcherTrait};
+    use cairo_loto_poc::testing_utils::mocks::ztoken_mock::{
+        IzTOKENMock, IzTOKENMockDispatcher, IzTOKENMockDispatcherTrait
+    };
     use cairo_loto_poc::testing_utils::constants::{random_ERC20_token,};
     use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait,};
     use starknet::{ContractAddress, get_caller_address, get_contract_address,};
@@ -77,14 +79,13 @@ use super::{IzkLendMarket, IzkLendMarketDispatcher, IzkLendMarketDispatcherTrait
         let zTOKEN_addrs = self.proof_of_deposit_token_addrs.read();
         let u256_amount: u256 = amount.into();
         let tickets_handler = get_caller_address();
-        
+
         // Burn `amount` of `zkLend_proof_of_deposit` from the tickets_handler contract ( = caller)
-        let zTOKEN_dispatcher = IzTOKENMockDispatcher{ contract_address: zTOKEN_addrs };
+        let zTOKEN_dispatcher = IzTOKENMockDispatcher { contract_address: zTOKEN_addrs };
         zTOKEN_dispatcher.burn(tickets_handler, u256_amount);
 
         // Send `amount` of `erc20_token` from this contract to the tickets_handler
-        let erc20_dispatcher = IERC20Dispatcher {contract_address: token };
+        let erc20_dispatcher = IERC20Dispatcher { contract_address: token };
         erc20_dispatcher.transfer(tickets_handler, u256_amount);
     }
-
 }
