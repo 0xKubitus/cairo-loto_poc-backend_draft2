@@ -289,7 +289,6 @@ mod TicketsHandlerContract {
             //! Error = 
             //! cairo_loto_poc_tests::integration_tests::test_tickets_handler::test_mint
             //! - Panicked with (0x434f4e54524143545f4e4f545f4445504c4f594544 ('CONTRACT_NOT_DEPLOYED'),
-            //! 0x454e545259504f494e545f4641494c4544 ('ENTRYPOINT_FAILED'),
             //! 0x454e545259504f494e545f4641494c4544 ('ENTRYPOINT_FAILED')).
             zkLend_dispatcher.deposit(erc20_asset, felt_amount);
         ////////////////////////////////////////////////////////////////////
