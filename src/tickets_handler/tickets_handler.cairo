@@ -148,14 +148,13 @@ mod TicketsHandlerContract {
             // ERC20 deposit into zkLend's vault
             /// use the newly created private function to deposit
             /// `ticket_value` into zkLend's `underlying asset` vault
-            // TODO: fix test or related private function
             self._deposit_to_zkLend(underlying_erc20, ticket_value);
 
-            // // Define next ticket's `token_id`
-            // let token_id = self.ticket.total_supply.read() + 1;
+            // Define next ticket's `token_id`
+            let token_id = self.ticket.total_supply.read() + 1;
 
-            // // Mints one ticket to the `user`
-            // self._mint(user, token_id);
+            // Mints one ticket to the `user`
+            self._mint(user, token_id);
         }
 
         #[external(v0)]
@@ -166,8 +165,7 @@ mod TicketsHandlerContract {
             //! => implement unit test of this private function
 
             //! Step 2:
-            // use the newly created private function to deposit
-            // `ticket_value` into zkLend's `underlying asset` vault
+            // use the newly created private function 
 
             //! Step 3:
             // Update tests of this public function 
