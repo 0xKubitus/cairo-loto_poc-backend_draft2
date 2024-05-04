@@ -270,154 +270,58 @@ fn setup_zkLend_market_mock_dispatcher(address: ContractAddress) -> IzkLendMarke
 
 // NEW SETUP FOR INTEGRATION TESTS Tickets Handler v0.4
 
-// #[derive(Drop)]
-// struct SetupData {
-//     zkLend_addrs: ContractAddress,
-//     zkLend_disp: IzkLendMarketDispatcher,
-//     zTOKEN_addrs: ContractAddress,
-//     zTOKEN_disp: IERC20Dispatcher,
-//     tickets_handler_addrs: ContractAddress,
-//     tickets_handler_disp: TicketsHandlerABIDispatcher,
-//     erc20_addrs: ContractAddress,
-//     erc20_disp: IERC20Dispatcher,
-// }
-
 #[derive(Drop)]
-struct TicketsHandlerStruct {
-    addrs: ContractAddress,
-    dispatcher: IzkLendMarketDispatcher,
+struct SetupData {
+    zkLend_addrs: ContractAddress,
+    zkLend_disp: IzkLendMarketDispatcher,
+    zTOKEN_addrs: ContractAddress,
+    zTOKEN_disp: IERC20Dispatcher,
+    tickets_handler_addrs: ContractAddress,
+    tickets_handler_disp: TicketsHandlerABIDispatcher,
+    erc20_addrs: ContractAddress,
+    erc20_disp: IERC20Dispatcher,
 }
 
-#[derive(Drop)]
-struct ERC20TokenStruct {
-    addrs: ContractAddress,
-    dispatcher: IERC20Dispatcher,
-}
+fn basic_setup_v04() -> SetupData {
+    // STEP 1: zkLend market and the proof of deposit token
+    // A: Deploy the zkLend market mock - without initializing the proof of deposit token address in storage during deployment.
+    let zkLend_market_addrs = utils::deploy(zkLendMarketMock::TEST_CLASS_HASH, array![]);
 
-#[derive(Drop)]
-struct zkLendMarketStruct {
-    addrs: ContractAddress,
-    dispatcher: IzkLendMarketDispatcher,
-}
+    // B: Deploy the proof of deposit token - provide the supply to the zkLend market mock during deployment.
+    let proof_of_deposit_token_addrs = full_setup_erc20_address(
+        "zkLend Market proof-of-deposit ERC20", "zCOIN", zkLend_market_addrs
+    );
+    let pod_token_dispatcher = setup_erc20_dispatcher(proof_of_deposit_token_addrs);
 
-#[derive(Drop)]
-struct zTOKENStruct {
-    addrs: ContractAddress,
-    dispatcher: IERC20Dispatcher,
-}
-
-
-
-
-
-
-
-
-
-
-
-fn setup_TicketsHandler() -> TicketsHandlerStruct {
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-fn setup_ERC20Token(
-    name: ByteArray, symbol: ByteArray, initial_supply: u256, recipient: ContractAddress
-) -> ERC20TokenStruct {
-    let mut calldata = array![];
-    calldata.append_serde(name);
-    calldata.append_serde(symbol);
-    calldata.append_serde(initial_supply);
-    calldata.append_serde(recipient);
-
-    let contract_address = utils::deploy(SnakeERC20Mock::TEST_CLASS_HASH, calldata);
-    let zTOKEN_dispatcher = IERC20Dispatcher { contract_address };
-
-    let setup_data = zTOKENStruct { addrs: contract_address, dispatcher: zTOKEN_dispatcher, };
-
-    setup_data
-}
-
-fn setup_zkLendMarket() -> zkLendMarketStruct {
-    let contract_address = utils::deploy(zkLendMarketMock::TEST_CLASS_HASH, array![]);
-    let zkLend_market_dispatcher = IzkLendMarketDispatcher { contract_address };
-
-    let setup_data = zkLendMarketStruct {
-        addrs: contract_address, dispatcher: zkLend_market_dispatcher,
+    // C: Register the proof of deposit token address in the storage of the zkLend market mock.
+    let zkLend_market_dispatcher = IzkLendMarketDispatcher {
+        contract_address: zkLend_market_addrs
     };
+    zkLend_market_dispatcher.set_proof_of_deposit_token(proof_of_deposit_token_addrs);
 
+    testing::set_contract_address(OWNER());
+
+    // STEP 2: Tickets handler and underlying ERC20 token
+    // A: Deploy an ERC20 mock contract for the underlying asset -> provide the initial supply to "OWNER".
+    let underlying_erc20_addrs = full_setup_erc20_address("some ERC20 token", "COIN", OWNER());
+    let underlying_erc20_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs);
+
+    // B: Deploy the tickets handler contract
+    let batch_mint_IDs: Array<u256> = array![];
+    let tickets_handler_dispatcher = ticket_dispatcher_with_event_bis(
+        batch_mint_IDs, underlying_erc20_addrs, zkLend_market_addrs
+    );
+    let tickets_handler_addrs = tickets_handler_dispatcher.contract_address;
+
+    let setup_data = SetupData {
+        zkLend_addrs: zkLend_market_addrs,
+        zkLend_disp: zkLend_market_dispatcher,
+        zTOKEN_addrs: proof_of_deposit_token_addrs,
+        zTOKEN_disp: pod_token_dispatcher,
+        tickets_handler_addrs: tickets_handler_addrs,
+        tickets_handler_disp: tickets_handler_dispatcher,
+        erc20_addrs: underlying_erc20_addrs,
+        erc20_disp: underlying_erc20_dispatcher,
+    };
     setup_data
 }
-
-fn setup_zTOKEN(name: ByteArray, symbol: ByteArray,) -> zTOKENStruct {
-    let mut calldata = array![];
-    calldata.append_serde(name);
-    calldata.append_serde(symbol);
-
-    let contract_address = utils::deploy(SnakeERC20Mock::TEST_CLASS_HASH, calldata);
-    let zTOKEN_dispatcher = IERC20Dispatcher { contract_address };
-
-    let setup_data = zTOKENStruct { addrs: contract_address, dispatcher: zTOKEN_dispatcher, };
-
-    setup_data
-}
-// fn basic_setup_v04() -> SetupData {
-//     // STEP 1: zkLend market and the proof of deposit token
-//     // A: Deploy the zkLend market mock - without initializing the proof of deposit token address in storage during deployment.
-//     let zkLend_market_addrs = utils::deploy(zkLendMarketMock::TEST_CLASS_HASH, array![]);
-
-//     // B: Deploy the proof of deposit token - provide the supply to the zkLend market mock during deployment.
-//     let proof_of_deposit_token_addrs = full_setup_erc20_address(
-//         "zkLend Market proof-of-deposit ERC20", "zCOIN", zkLend_market_addrs
-//     );
-//     let pod_token_dispatcher = setup_erc20_dispatcher(proof_of_deposit_token_addrs);
-
-//     // C: Register the proof of deposit token address in the storage of the zkLend market mock.
-//     let zkLend_market_dispatcher = IzkLendMarketDispatcher {
-//         contract_address: zkLend_market_addrs
-//     };
-//     zkLend_market_dispatcher.set_proof_of_deposit_token(proof_of_deposit_token_addrs);
-
-//     testing::set_contract_address(OWNER());
-
-//     // STEP 2: Tickets handler and underlying ERC20 token
-//     // A: Deploy an ERC20 mock contract for the underlying asset -> provide the initial supply to "OWNER".
-//     let underlying_erc20_addrs = full_setup_erc20_address("some ERC20 token", "COIN", OWNER());
-//     let underlying_erc20_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs);
-
-//     // B: Deploy the tickets handler contract
-//     let batch_mint_IDs: Array<u256> = array![];
-//     let tickets_handler_dispatcher = ticket_dispatcher_with_event_bis(
-//         batch_mint_IDs, underlying_erc20_addrs, zkLend_market_addrs
-//     );
-//     let tickets_handler_addrs = tickets_handler_dispatcher.contract_address;
-
-//     let setup_data = SetupData {
-//         zkLend_addrs: zkLend_market_addrs,
-//         zkLend_disp: zkLend_market_dispatcher,
-//         zTOKEN_addrs: proof_of_deposit_token_addrs,
-//         zTOKEN_disp: pod_token_dispatcher,
-//         tickets_handler_addrs: tickets_handler_addrs,
-//         tickets_handler_disp: tickets_handler_dispatcher,
-//         erc20_addrs: underlying_erc20_addrs,
-//         erc20_disp: underlying_erc20_dispatcher,
-//     };
-//     setup_data
-// }
-

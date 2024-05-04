@@ -2,6 +2,7 @@ use starknet::ContractAddress;
 
 #[starknet::interface]
 trait IzTOKENMock<TState> {
+    fn mint(ref self: TState, user: ContractAddress, amount: u256);
     fn burn(ref self: TState, user: ContractAddress, amount: u256);
 }
 
@@ -41,7 +42,12 @@ mod zTOKENMock {
         recipient: ContractAddress
     ) {
         self.erc20.initializer(name, symbol);
-        self.erc20._mint(recipient, initial_supply);
+    // self.erc20._mint(recipient, initial_supply); // not needed for proof-of-deposit tokens
+    }
+
+    #[external(v0)]
+    fn mint(ref self: ContractState, user: ContractAddress, amount: u256) {
+        self.erc20._mint(user, amount);
     }
 
     #[external(v0)]
