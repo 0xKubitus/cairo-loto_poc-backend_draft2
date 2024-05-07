@@ -286,10 +286,13 @@ struct SetupData {
 fn setup_v04() -> SetupData {
     let zkLend_market_addrs = utils::deploy(zkLendMarketMock::TEST_CLASS_HASH, array![]);
 
+    //TODO: REWORK THIS USING zTOKEN Mock instead of ERC20
+    //! ------------------------------------------------------------------------
     let proof_of_deposit_token_addrs = full_setup_erc20_address(
         "zkLend Market proof-of-deposit ERC20", "zCOIN", zkLend_market_addrs
     );
     let pod_token_dispatcher = setup_erc20_dispatcher(proof_of_deposit_token_addrs);
+    //! ------------------------------------------------------------------------
 
     let zkLend_market_dispatcher = IzkLendMarketMockDispatcher {
         contract_address: zkLend_market_addrs
