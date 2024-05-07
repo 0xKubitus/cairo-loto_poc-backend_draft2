@@ -1,26 +1,29 @@
 use starknet::ContractAddress;
 
 #[starknet::interface]
-trait IzkLendMarket<TState> {
+trait IzkLendMarketMock<TState> {
     fn set_proof_of_deposit_token(ref self: TState, token: ContractAddress);
     fn get_proof_of_deposit_token(self: @TState) -> ContractAddress;
 
     fn deposit(ref self: TState, token: ContractAddress, amount: felt252);
     fn withdraw(ref self: TState, token: ContractAddress, amount: felt252);
-
+    
     fn get_deposit_value_of(self: @TState, user: ContractAddress) -> u256;
+    
+    //! TO BE DELETED
+    fn withdraw_in_progress(self: @TState) -> ByteArray;
 }
 
 
 #[starknet::contract]
 mod zkLendMarketMock {
     use core::traits::Into;
-    use super::{IzkLendMarket, IzkLendMarketDispatcher, IzkLendMarketDispatcherTrait};
+    use super::{IzkLendMarketMock, IzkLendMarketMockDispatcher, IzkLendMarketMockDispatcherTrait};
     use cairo_loto_poc::testing_utils::mocks::ztoken_mock::{
         IzTOKENMock, IzTOKENMockDispatcher, IzTOKENMockDispatcherTrait
     };
     use cairo_loto_poc::testing_utils::constants::{random_ERC20_token,};
-    use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait,};
+    use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait,};
     use starknet::{ContractAddress, get_caller_address, get_contract_address,};
 
 
@@ -88,6 +91,31 @@ mod zkLendMarketMock {
         // Send `amount` of `erc20_token` from this contract to the tickets_handler
         let erc20_dispatcher = IERC20Dispatcher { contract_address: token };
         erc20_dispatcher.transfer(tickets_handler, u256_amount);
+    }
+
+    //! TO BE DELETED (USED FOR DEV/TESTING)
+    #[external(v0)]
+    fn withdraw_in_progress(ref self: ContractState, token: ContractAddress, amount: felt252) {
+        let u256_amount: u256 = amount.into();
+        let tickets_handler = get_caller_address();
+        let zkLend_market = get_contract_address();
+        let underlying_erc20_dispatcher = IERC20Dispatcher { contract_address: token };
+
+        assert(underlying_erc20_dispatcher.balance_of(zkLend_market) == u256_amount, 'check zklend erc20 balance'); // not mandatory
+        
+        let zTOKEN_addrs = self.proof_of_deposit_token_addrs.read();
+        let zTOKEN_dispatcher = IERC20Dispatcher {
+            contract_address: zTOKEN_addrs
+        };
+
+        let res_of_whatever = zTOKEN_dispatcher.whatever();
+        assert(res_of_whatever == "whatever", 'here is the issue'); // not mandatory
+
+        // // Burn `amount` of `zkLend_proof_of_deposit` from the tickets_handler contract ( = caller)
+        // zTOKEN_dispatcher.burn(tickets_handler, u256_amount);
+
+
+
     }
 
 }

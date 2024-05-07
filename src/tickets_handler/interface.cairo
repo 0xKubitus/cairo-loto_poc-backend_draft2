@@ -13,7 +13,7 @@ trait TicketsHandlerABI<TState> {
     fn get_zkLend_market_address(self: @TState) -> ContractAddress;
     fn set_zkLend_market_address(ref self: TState, address: ContractAddress);
     fn mint(ref self: TState, to: ContractAddress);
-    fn burn(ref self: TState, token_id: u256);
+    fn burn(ref self: TState, token_id: u256, recipient: ContractAddress);
 
     // IERC721
     fn balance_of(self: @TState, account: ContractAddress) -> u256;
