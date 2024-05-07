@@ -72,7 +72,7 @@ fn test_mint() {
     // assert_eq!(underlying_erc20_dispatcher.balance_of(OWNER()), TEN_WITH_6_DECIMALS); // not mandatory
     // assert_eq!(underlying_erc20_dispatcher.balance_of(tickets_handler_addrs), 0); // not mandatory
     // assert_eq!(underlying_erc20_dispatcher.balance_of(zkLend_market_addrs), 0); // not mandatory
-    
+
     let amount = tickets_handler_dispatcher.ticket_value();
     underlying_erc20_dispatcher.approve(tickets_handler_addrs, amount);
 
@@ -89,9 +89,8 @@ fn test_mint() {
     assert_eq!(underlying_erc20_dispatcher.balance_of(OWNER()), 0);
     assert_eq!(underlying_erc20_dispatcher.balance_of(tickets_handler_addrs), 0);
     assert_eq!(underlying_erc20_dispatcher.balance_of(zkLend_market_addrs), TEN_WITH_6_DECIMALS);
-    
-    //! TODO: Check zTOKEN/proof of deposit balance before and after mint.
-    // TODO: Control that the right event(s) are emitted?
+//! TODO: Check zTOKEN/proof of deposit balance before and after mint.
+// TODO: Control that the right event(s) are emitted?
 
 }
 
@@ -186,7 +185,7 @@ fn test_mint_and_burn() {
     // assert_eq!(underlying_erc20_dispatcher.balance_of(OWNER()), TEN_WITH_6_DECIMALS); // not mandatory
     // assert_eq!(underlying_erc20_dispatcher.balance_of(tickets_handler_addrs), 0); // not mandatory
     // assert_eq!(underlying_erc20_dispatcher.balance_of(zkLend_market_addrs), 0); // not mandatory
-    
+
     let amount = tickets_handler_dispatcher.ticket_value();
     underlying_erc20_dispatcher.approve(tickets_handler_addrs, amount);
 
@@ -203,15 +202,12 @@ fn test_mint_and_burn() {
     assert_eq!(underlying_erc20_dispatcher.balance_of(OWNER()), 0);
     assert_eq!(underlying_erc20_dispatcher.balance_of(tickets_handler_addrs), 0);
     assert_eq!(underlying_erc20_dispatcher.balance_of(zkLend_market_addrs), TEN_WITH_6_DECIMALS);
-    
-    //! TODO: Check zTOKEN/proof of deposit balance before and after mint.
-    //? =================================================================
-    
+//! TODO: Check zTOKEN/proof of deposit balance before and after mint.
+//? =================================================================
 
-    // TODO: use "burn()" method + implement verifications
+// TODO: use "burn()" method + implement verifications
 
-    
-    // OLD FUNCTION:
+// OLD FUNCTION:
 // let underlying_erc20_addrs = light_setup_erc20_address(OWNER());
 // let underlying_erc20_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs);
 

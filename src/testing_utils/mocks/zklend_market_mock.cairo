@@ -7,9 +7,9 @@ trait IzkLendMarketMock<TState> {
 
     fn deposit(ref self: TState, token: ContractAddress, amount: felt252);
     fn withdraw(ref self: TState, token: ContractAddress, amount: felt252);
-    
+
     fn get_deposit_value_of(self: @TState, user: ContractAddress) -> u256;
-    
+
     //! TO BE DELETED
     fn withdraw_in_progress(self: @TState) -> ByteArray;
 }
@@ -62,10 +62,10 @@ mod zkLendMarketMock {
 
         // Send `amount` of `zkLend_proof_of_deposit` from this contract to the caller
         let proof_of_deposit_token = self.proof_of_deposit_token_addrs.read();
-        let zklend_PoD_erc20_dispatcher = IERC20Dispatcher {
+        let zklend_PoD_erc20_dispatcher = IzTOKENMockDispatcher {
             contract_address: proof_of_deposit_token
         };
-        zklend_PoD_erc20_dispatcher.transfer(caller, u256_amount);
+        zklend_PoD_erc20_dispatcher.mint(caller, u256_amount);
 
         // Update Storage state with the amount of the caller's deposit
         self.deposit_value.write(caller, u256_amount);
@@ -100,21 +100,19 @@ mod zkLendMarketMock {
         let zkLend_market = get_contract_address();
         let underlying_erc20_dispatcher = IERC20Dispatcher { contract_address: token };
 
-        assert(underlying_erc20_dispatcher.balance_of(zkLend_market) == u256_amount, 'check zklend erc20 balance'); // not mandatory
-        
+        assert(
+            underlying_erc20_dispatcher.balance_of(zkLend_market) == u256_amount,
+            'check zklend erc20 balance'
+        ); // not mandatory
+
         let zTOKEN_addrs = self.proof_of_deposit_token_addrs.read();
-        let zTOKEN_dispatcher = IERC20Dispatcher {
-            contract_address: zTOKEN_addrs
-        };
+        let zTOKEN_dispatcher = IzTOKENMockDispatcher { contract_address: zTOKEN_addrs };
 
         let res_of_whatever = zTOKEN_dispatcher.whatever();
         assert(res_of_whatever == "whatever", 'here is the issue'); // not mandatory
-
+            
         // // Burn `amount` of `zkLend_proof_of_deposit` from the tickets_handler contract ( = caller)
         // zTOKEN_dispatcher.burn(tickets_handler, u256_amount);
 
-
-
     }
-
 }
