@@ -3,6 +3,9 @@ use starknet::ContractAddress;
 #[starknet::interface]
 trait IzTOKENMock<TState> {
     fn burn(ref self: TState, user: ContractAddress, amount: u256);
+    
+    //! TO BE DELETED:
+    fn whatever(self: @TState) -> ByteArray;
 }
 
 
@@ -47,5 +50,11 @@ mod zTOKENMock {
     #[external(v0)]
     fn burn(ref self: ContractState, user: ContractAddress, amount: u256) {
         self.erc20._burn(user, amount);
+    }
+
+
+    //! TO BE DELETED:
+    fn whatever(self: @ContractState) -> ByteArray {
+        "whatever"
     }
 }

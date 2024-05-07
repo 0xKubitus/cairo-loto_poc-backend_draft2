@@ -13,7 +13,7 @@ use cairo_loto_poc::tickets_handler::interface::{
     TicketsHandlerABIDispatcher, TicketsHandlerABIDispatcherTrait,
 };
 use cairo_loto_poc::testing_utils::mocks::zklend_market_mock::{
-    zkLendMarketMock, IzkLendMarketDispatcher, IzkLendMarketDispatcherTrait,
+    zkLendMarketMock, IzkLendMarketMockDispatcher, IzkLendMarketMockDispatcherTrait,
 };
 use cairo_loto_poc::testing_utils::constants::{
     TOKEN_1, TOKEN_2, TOKEN_3, TOKENS_LEN, NONEXISTENT, TEN_WITH_6_DECIMALS, ETH_ADDRS,
@@ -257,8 +257,8 @@ fn setup_zkLend_market_mock_address() -> ContractAddress {
     zkLend_market_addrs
 }
 
-fn setup_zkLend_market_mock_dispatcher(address: ContractAddress) -> IzkLendMarketDispatcher {
-    let dispatcher = IzkLendMarketDispatcher { contract_address: address };
+fn setup_zkLend_market_mock_dispatcher(address: ContractAddress) -> IzkLendMarketMockDispatcher {
+    let dispatcher = IzkLendMarketMockDispatcher { contract_address: address };
     // `OwnershipTransferred` + `Transfer`s
     utils::drop_events(
         dispatcher.contract_address, TOKENS_LEN.try_into().unwrap() + 1
@@ -274,7 +274,7 @@ fn setup_zkLend_market_mock_dispatcher(address: ContractAddress) -> IzkLendMarke
 #[derive(Drop)]
 struct SetupData {
     zkLend_addrs: ContractAddress,
-    zkLend_disp: IzkLendMarketDispatcher,
+    zkLend_disp: IzkLendMarketMockDispatcher,
     zTOKEN_addrs: ContractAddress,
     zTOKEN_disp: IERC20Dispatcher,
     tickets_handler_addrs: ContractAddress,
@@ -291,7 +291,7 @@ fn setup_v04() -> SetupData {
     );
     let pod_token_dispatcher = setup_erc20_dispatcher(proof_of_deposit_token_addrs);
 
-    let zkLend_market_dispatcher = IzkLendMarketDispatcher {
+    let zkLend_market_dispatcher = IzkLendMarketMockDispatcher {
         contract_address: zkLend_market_addrs
     };
     zkLend_market_dispatcher.set_proof_of_deposit_token(proof_of_deposit_token_addrs);
