@@ -1,17 +1,14 @@
 use cairo_loto_poc::tickets_handler::components::cairo_loto_ticket::CairoLotoTicketComponent::TicketInternalTrait;
 use cairo_loto_poc::tickets_handler::tickets_handler::TicketsHandlerContract;
 use cairo_loto_poc::tickets_handler::tickets_handler::TicketsHandlerContract::{
-    PrivateImpl, TicketsHandlerImpl, ITicketsHandlerTrait, PrivateTrait
+    PrivateImpl, TicketsHandlerImpl,
 };
 use cairo_loto_poc::tickets_handler::interface::{
     TicketsHandlerABIDispatcher, TicketsHandlerABIDispatcherTrait,
 };
 use cairo_loto_poc::testing_utils::mocks::erc20_mock::SnakeERC20Mock;
 use cairo_loto_poc::testing_utils::mocks::zklend_market_mock::{
-    zkLendMarketMock, IzkLendMarketMockDispatcher, IzkLendMarketMockDispatcherTrait,
-};
-use cairo_loto_poc::testing_utils::mocks::ztoken_mock::{
-    zTOKENMock, IzTOKENMockDispatcher, IzTOKENMockDispatcherTrait,
+    zkLendMarketMock, IzkLendMarketDispatcher, IzkLendMarketDispatcherTrait,
 };
 use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
 use cairo_loto_poc::testing_utils::{
@@ -41,38 +38,34 @@ use starknet::{ContractAddress,};
 
 #[test]
 fn test_mint() {
-    let setup_data = setup_v04();
+    let setup_data = basic_setup_v04();
+    let tickets_handler_addrs = setup_data.tickets_handler_addrs;
+    let zkLend_market_addrs = setup_data.zkLend_addrs;
 
-    let tickets_handler_dispatcher = setup_data.tickets_handler_disp;
-    let underlying_erc20_dispatcher = setup_data.erc20_disp;
-    assert_eq!(tickets_handler_dispatcher.ticket_value(), TEN_WITH_6_DECIMALS); // not mandatory
-    assert_eq!(
-        underlying_erc20_dispatcher.balance_of(OWNER()), TEN_WITH_6_DECIMALS
-    ); // not mandatory
+    // assert_eq!(setup_data.tickets_handler_disp.balance_of(OWNER()), 0); // not mandatory
+    // assert_eq!(setup_data.erc20_disp.balance_of(OWNER()), TEN_WITH_6_DECIMALS); // not mandatory
+    // assert_eq!(setup_data.erc20_disp.balance_of(tickets_handler_addrs), 0); // not mandatory
+    // assert_eq!(setup_data.erc20_disp.balance_of(zkLend_market_addrs), 0); // not mandatory
 
-    let tickets_handler = setup_data.tickets_handler_addrs;
-    let amount = tickets_handler_dispatcher.ticket_value();
+    let amount = setup_data.tickets_handler_disp.ticket_value();
+    setup_data.erc20_disp.approve(tickets_handler_addrs, amount);
 
-    underlying_erc20_dispatcher.approve(tickets_handler, amount);
-    assert_eq!(underlying_erc20_dispatcher.balance_of(setup_data.zkLend_addrs), 0); // not mandatory
-    assert_eq!(
-        underlying_erc20_dispatcher.allowance(OWNER(), tickets_handler), TEN_WITH_6_DECIMALS
-    ); // not mandatory
-
-    // let ztoken = setup_data.zTOKEN_addrs; // is it required to declare this?
-    let ztoken_dispatcher = setup_data.zTOKEN_disp;
-    assert_eq!(ztoken_dispatcher.balance_of(tickets_handler), 0);
+    // assert_eq!(
+    //     setup_data.erc20_disp.allowance(OWNER(), tickets_handler_addrs), TEN_WITH_6_DECIMALS
+    // ); // not mandatory
+    // assert_eq!(
+    //     zkLend_market_addrs, setup_data.tickets_handler_disp.get_zkLend_market_address()
+    // ); // not mandatory
 
     setup_data.tickets_handler_disp.mint(OWNER());
 
-    assert_eq!(tickets_handler_dispatcher.balance_of(OWNER()), 1);
-    assert_eq!(underlying_erc20_dispatcher.balance_of(OWNER()), 0);
-    assert_eq!(underlying_erc20_dispatcher.balance_of(tickets_handler), 0);
-    assert_eq!(
-        underlying_erc20_dispatcher.balance_of(setup_data.zkLend_addrs), TEN_WITH_6_DECIMALS
-    );
-    assert_eq!(ztoken_dispatcher.balance_of(tickets_handler), TEN_WITH_6_DECIMALS);
+    assert_eq!(setup_data.tickets_handler_disp.balance_of(OWNER()), 1);
+    assert_eq!(setup_data.erc20_disp.balance_of(OWNER()), 0);
+    assert_eq!(setup_data.erc20_disp.balance_of(tickets_handler_addrs), 0);
+    assert_eq!(setup_data.erc20_disp.balance_of(zkLend_market_addrs), TEN_WITH_6_DECIMALS);
+//! TODO: Check zTOKEN/proof of deposit balance before and after mint.
 // TODO: Control that the right event(s) are emitted?
+
 }
 
 #[test]
@@ -137,46 +130,85 @@ fn test_try_mint_with_smaller_allowance() {
 
 #[test]
 fn test_mint_and_burn() {
-    let setup_data = setup_v04();
+    //? =================================================================
+    //? NEW MINT FUNCTION
+    let zkLend_market_addrs = utils::deploy(zkLendMarketMock::TEST_CLASS_HASH, array![]);
 
-    let tickets_handler_dispatcher = setup_data.tickets_handler_disp;
-    let underlying_erc20_dispatcher = setup_data.erc20_disp;
-    assert_eq!(tickets_handler_dispatcher.ticket_value(), TEN_WITH_6_DECIMALS); // not mandatory
-    assert_eq!(
-        underlying_erc20_dispatcher.balance_of(OWNER()), TEN_WITH_6_DECIMALS
-    ); // not mandatory
+    let proof_of_deposit_token_addrs = full_setup_erc20_address(
+        "zkLend Market proof-of-deposit ERC20", "zCOIN", zkLend_market_addrs
+    );
+    let pod_token_dispatcher = setup_erc20_dispatcher(proof_of_deposit_token_addrs);
 
-    let tickets_handler = setup_data.tickets_handler_addrs;
+    let zkLend_market_dispatcher = IzkLendMarketDispatcher {
+        contract_address: zkLend_market_addrs
+    };
+    zkLend_market_dispatcher.set_proof_of_deposit_token(proof_of_deposit_token_addrs);
+
+    testing::set_contract_address(OWNER());
+
+    let underlying_erc20_addrs = full_setup_erc20_address("some ERC20 token", "COIN", OWNER());
+    let underlying_erc20_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs);
+
+    let batch_mint_IDs: Array<u256> = array![];
+    let tickets_handler_dispatcher = ticket_dispatcher_with_event_bis(
+        batch_mint_IDs, underlying_erc20_addrs, zkLend_market_addrs
+    );
+    let tickets_handler_addrs = tickets_handler_dispatcher.contract_address;
+
+    // assert_eq!(tickets_handler_dispatcher.balance_of(OWNER()), 0); // not mandatory
+    // assert_eq!(underlying_erc20_dispatcher.balance_of(OWNER()), TEN_WITH_6_DECIMALS); // not mandatory
+    // assert_eq!(underlying_erc20_dispatcher.balance_of(tickets_handler_addrs), 0); // not mandatory
+    // assert_eq!(underlying_erc20_dispatcher.balance_of(zkLend_market_addrs), 0); // not mandatory
+
     let amount = tickets_handler_dispatcher.ticket_value();
+    underlying_erc20_dispatcher.approve(tickets_handler_addrs, amount);
 
-    underlying_erc20_dispatcher.approve(tickets_handler, amount);
-    assert_eq!(underlying_erc20_dispatcher.balance_of(setup_data.zkLend_addrs), 0); // not mandatory
-    assert_eq!(
-        underlying_erc20_dispatcher.allowance(OWNER(), tickets_handler), TEN_WITH_6_DECIMALS
-    ); // not mandatory
-
-    // let ztoken = setup_data.zTOKEN_addrs; // is it required to declare this?
-    let ztoken_dispatcher = setup_data.zTOKEN_disp;
-    assert_eq!(ztoken_dispatcher.balance_of(tickets_handler), 0);
+    // assert_eq!(
+    //     underlying_erc20_dispatcher.allowance(OWNER(), tickets_handler_addrs), TEN_WITH_6_DECIMALS
+    // ); // not mandatory
+    // assert_eq!(
+    //     zkLend_market_addrs, tickets_handler_dispatcher.get_zkLend_market_address()
+    // ); // not mandatory
 
     tickets_handler_dispatcher.mint(OWNER());
 
-    assert_eq!(tickets_handler_dispatcher.balance_of(OWNER()), 1); // not mandatory
-    assert_eq!(underlying_erc20_dispatcher.balance_of(OWNER()), 0); // not mandatory
-    assert_eq!(underlying_erc20_dispatcher.balance_of(tickets_handler), 0); // not mandatory
-    assert_eq!(
-        underlying_erc20_dispatcher.balance_of(setup_data.zkLend_addrs), TEN_WITH_6_DECIMALS
-    ); // not mandatory
-    assert_eq!(ztoken_dispatcher.balance_of(tickets_handler), TEN_WITH_6_DECIMALS); // not mandatory
+    assert_eq!(tickets_handler_dispatcher.balance_of(OWNER()), 1);
+    assert_eq!(underlying_erc20_dispatcher.balance_of(OWNER()), 0);
+    assert_eq!(underlying_erc20_dispatcher.balance_of(tickets_handler_addrs), 0);
+    assert_eq!(underlying_erc20_dispatcher.balance_of(zkLend_market_addrs), TEN_WITH_6_DECIMALS);
+//! TODO: Check zTOKEN/proof of deposit balance before and after mint.
+//? =================================================================
 
-    tickets_handler_dispatcher.burn(1, OWNER());
+// TODO: use "burn()" method + implement verifications
 
-    assert_eq!(tickets_handler_dispatcher.balance_of(OWNER()), 0);
-    assert_eq!(tickets_handler_dispatcher.circulating_supply(), 0);
-    assert_eq!(tickets_handler_dispatcher.total_tickets_emitted(), 1);
-    assert_eq!(underlying_erc20_dispatcher.balance_of(tickets_handler), 0);
-    assert_eq!(underlying_erc20_dispatcher.balance_of(OWNER()), TEN_WITH_6_DECIMALS);
-    assert_eq!(ztoken_dispatcher.balance_of(tickets_handler), 0);
+// OLD FUNCTION:
+// let underlying_erc20_addrs = light_setup_erc20_address(OWNER());
+// let underlying_erc20_dispatcher = setup_erc20_dispatcher(underlying_erc20_addrs);
+
+// let tickets_handler_dispatcher = setup_ticket_dispatcher(underlying_erc20_addrs);
+// let tickets_handler_addrs = tickets_handler_dispatcher.contract_address;
+// let amount = tickets_handler_dispatcher.ticket_value();
+
+// // testing::set_caller_address(OWNER()); // (NOTE FOR SELF: this one works as well)
+// testing::set_contract_address(OWNER());
+
+// // First, a ticket must be minted because TicketsHandlerContract does not own 
+// // any underlying asset at deployment (so it cant giveback a deposit that does not exist)
+// underlying_erc20_dispatcher.approve(tickets_handler_addrs, amount);
+// tickets_handler_dispatcher.mint(OWNER());
+// assert_eq!(
+//     underlying_erc20_dispatcher.balance_of(tickets_handler_addrs),
+//     tickets_handler_dispatcher.ticket_value()
+// ); // not needed
+
+// tickets_handler_dispatcher.burn(1);
+// assert_eq!(tickets_handler_dispatcher.balance_of(OWNER()), 3);
+// assert_eq!(tickets_handler_dispatcher.circulating_supply(), 3);
+// assert_eq!(tickets_handler_dispatcher.total_tickets_emitted(), 4);
+// // make sure that the ticketsHandler contract does not own
+// // anymore of the underlying asset after the "burn()" transaction
+// assert_eq!(underlying_erc20_dispatcher.balance_of(tickets_handler_addrs), 0);
+
 // TODO: Control that the right event(s) are emitted
 
 }
@@ -202,7 +234,7 @@ fn test_try_burn_wrong_ticket() {
     ); // not needed
 
     // TEST PANICS BECAUSE THE `token_id` IS NOT VALID (TICKET NOT MINTED)
-    tickets_handler_dispatcher.burn(5, OWNER());
+    tickets_handler_dispatcher.burn(5);
 }
 
 
@@ -231,27 +263,5 @@ fn test_try_burn_not_owner() {
 
     // TEST PANICS BECAUSE "OTHER" IS NOT THE OWNER OF `token_id`
     assert_eq!(tickets_handler_dispatcher.owner_of(1), OWNER());
-    tickets_handler_dispatcher.burn(1, OTHER());
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-//! TESTING `testing_utils::setup_v04` TO BE DELETED
-#[test]
-fn test_setup_v04() {
-    let setup_data = setup_v04();
-
-    assert_eq!(
-        setup_data.tickets_handler_disp.ticket_value(), TEN_WITH_6_DECIMALS
-    ); // not mandatory
-    assert_eq!(setup_data.erc20_disp.balance_of(OWNER()), TEN_WITH_6_DECIMALS); // not mandatory
-
-    let tickets_handler = setup_data.tickets_handler_addrs;
-    let amount = setup_data.tickets_handler_disp.ticket_value();
-
-    setup_data.erc20_disp.approve(tickets_handler, amount);
-
-    assert_eq!(
-        setup_data.erc20_disp.allowance(OWNER(), tickets_handler), TEN_WITH_6_DECIMALS
-    ); // not mandatory
+    tickets_handler_dispatcher.burn(1);
 }

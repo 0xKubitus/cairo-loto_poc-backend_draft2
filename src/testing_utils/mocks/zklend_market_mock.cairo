@@ -60,7 +60,7 @@ mod zkLendMarketMock {
         let u256_amount: u256 = amount.into();
         underlying_asset_dispatcher.transfer_from(caller, get_contract_address(), u256_amount);
 
-        // Send `amount` of `zkLend_proof_of_deposit` from this contract to the caller
+        // Mint `amount` of `zkLend_proof_of_deposit` to the caller
         let proof_of_deposit_token = self.proof_of_deposit_token_addrs.read();
         let zklend_PoD_erc20_dispatcher = IzTOKENMockDispatcher {
             contract_address: proof_of_deposit_token
@@ -71,6 +71,7 @@ mod zkLendMarketMock {
         self.deposit_value.write(caller, u256_amount);
     }
 
+    
     //! NOTE FOR SELF => Note that my mock implementation of zklend market and
     //! zTOKEN contracts requires the caller ( = tickets handler contract) 
     //! to approve zklend market to spend their zTOKENs/proof-of-deposit

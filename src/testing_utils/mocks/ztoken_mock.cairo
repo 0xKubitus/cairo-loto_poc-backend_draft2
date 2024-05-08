@@ -58,7 +58,9 @@ mod zTOKENMock {
     // recipient: ContractAddress
     ) {
         self.erc20.initializer(name, symbol);
+
     // self.erc20._mint(recipient, initial_supply); // not needed (tokens are only minted when users are making deposits on zkLend)
+
     }
 
     #[external(v0)]
