@@ -43,7 +43,7 @@ mod TicketsHandlerContract {
     use core::option::OptionTrait;
     use core::traits::{Into, TryInto};
     // use cairo_loto_poc::testing_utils::mocks::ztoken_mock::{IzTOKENMock, IzTOKENMockDispatcher, IzTOKENMockDispatcherTrait};
-    // use cairo_loto_poc::testing_utils::mocks::zklend_market_mock::{IzkLendMarketMock, IzkLendMarketMockDispatcher, IzkLendMarketMockDispatcherTrait};
+    // use cairo_loto_poc::testing_utils::mocks::zklend_market_mock::{IzkLendMarket, IzkLendMarketDispatcher, IzkLendMarketDispatcherTrait};
 
     // const MAINNET_ZKLEND_MARKET_ADRS: felt252 =
     //     0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05;
@@ -172,22 +172,17 @@ mod TicketsHandlerContract {
             let felt_value: felt252 = ticket_value.try_into().unwrap();
             let zkLend_market = self.zkLend_mkt_addrs.read();
 
-            //! ----------------------------------------------------------------
-            // TODO: MAKE THIS TEST PASS
-            //? IS IT MANDATORY TO CREATE A PRIVATE FUNCTION FOR THIS? (IF SO, WHY EXACTLY?)
-
-            // // underlying asset withdrawal from zkLend's vault
+            // underlying asset withdrawal from zkLend's vault
+            //! IS IT MANDATORY TO CREATE A PRIVATE FUNCTION FOR THIS? (IF SO, WHY EXACTLY?)
             let zkLend_dispatcher = IzkLendMarketDispatcher { contract_address: zkLend_market };
-            zkLend_dispatcher.withdraw_in_progress(underlying_erc20, felt_value);
-        //! ----------------------------------------------------------------
+            zkLend_dispatcher.withdraw(underlying_erc20, felt_value);
 
-        // Destroy given ticket
-        // self._burn(token_id);
+            // Destroy given ticket
+            self._burn(token_id);
 
-        // // Send deposit back to the `recipient` (not hardcoded as `caller` for more flexibility)
-        // IERC20Dispatcher { contract_address: underlying_erc20 }.transfer(recipient, ticket_value);
-
-        // TODO: Update tests of this public function
+            // Send deposit back to the `recipient` (not hardcoded as `caller` for more flexibility)
+            IERC20Dispatcher { contract_address: underlying_erc20 }
+                .transfer(recipient, ticket_value);
         }
 
 
