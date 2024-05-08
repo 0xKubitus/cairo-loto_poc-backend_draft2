@@ -20,7 +20,10 @@ use cairo_loto_poc::testing_utils::mocks::erc721_receiver_mocks::{
 };
 use cairo_loto_poc::testing_utils::mocks::non_implementing_mock::NonImplementingMock;
 use cairo_loto_poc::testing_utils::mocks::zklend_market_mock::{
-    zkLendMarketMock, IzkLendMarketDispatcher, IzkLendMarketDispatcherTrait,
+    zkLendMarketMock, IzkLendMarketMockDispatcher, IzkLendMarketMockDispatcherTrait,
+};
+use cairo_loto_poc::testing_utils::mocks::ztoken_mock::{
+    zTOKENMock, IzTOKENMockDispatcher, IzTOKENMockDispatcherTrait,
 };
 use cairo_loto_poc::testing_utils::token::test_erc721::{
     assert_event_transfer, assert_only_event_transfer, assert_event_approval,
@@ -185,13 +188,11 @@ fn test__deposit_to_zkLend() {
     let zkLend_market_addrs = utils::deploy(zkLendMarketMock::TEST_CLASS_HASH, no_calldata);
 
     // B: Deploy the proof of deposit token - provide the supply to the zkLend market mock during deployment.
-    let proof_of_deposit_token_addrs = testing_utils::full_setup_erc20_address(
-        "zkLend Market proof-of-deposit ERC20", "zCOIN", zkLend_market_addrs
-    );
-    let pod_token_dispatcher = testing_utils::setup_erc20_dispatcher(proof_of_deposit_token_addrs);
+    let proof_of_deposit_token_addrs = testing_utils::setup_zTOKEN_address();
+    let pod_token_dispatcher = testing_utils::setup_zTOKEN_dispatcher(proof_of_deposit_token_addrs);
 
     // C: Register the proof of deposit token address in the storage of the zkLend market mock.
-    let zkLend_market_dispatcher = IzkLendMarketDispatcher {
+    let zkLend_market_dispatcher = IzkLendMarketMockDispatcher {
         contract_address: zkLend_market_addrs
     };
     zkLend_market_dispatcher.set_proof_of_deposit_token(proof_of_deposit_token_addrs);
@@ -212,9 +213,9 @@ fn test__deposit_to_zkLend() {
     calldata.append_serde(zkLend_market_addrs);
 
     let tickets_handler_addrs = utils::deploy(TicketsHandlerContract::TEST_CLASS_HASH, calldata);
-    let tickets_handler_dispatcher = TicketsHandlerABIDispatcher {
-        contract_address: tickets_handler_addrs
-    };
+    // let tickets_handler_dispatcher = TicketsHandlerABIDispatcher {
+    //     contract_address: tickets_handler_addrs
+    // };
 
     // B: Deploy an ERC20 mock contract for the underlying asset -> provide the initial supply to the tickets handler contract.
     let underlying_erc20_addrs = testing_utils::full_setup_erc20_address(
@@ -227,34 +228,24 @@ fn test__deposit_to_zkLend() {
     state.ticket._set_underlying_asset(underlying_erc20_addrs);
 
     // STEP 3: PERFORM A BUNCH OF CHECKS BEFORE USING "_deposit_on_zkLend()"
-    // A: Verify that zkLend market mock indeed has 10 "zCOIN".
-    let zklend_mkt_pod_token_balance_before = pod_token_dispatcher.balance_of(zkLend_market_addrs);
-    assert_eq!(zklend_mkt_pod_token_balance_before, TEN_WITH_6_DECIMALS);
-
-    // B: Verify that the tickets handler indeed has 10 "COIN".
+    // A: Verify that the tickets handler indeed has 10 "COIN" ( = underlying asset)
     let tickets_handler_underlying_asset_balance_before = underlying_erc20_dispatcher
         .balance_of(tickets_handler_addrs);
     assert_eq!(tickets_handler_underlying_asset_balance_before, TEN_WITH_6_DECIMALS);
 
-    // C: Use the test__deposit_to_zkLend() function.
+    // B: Use the test__deposit_to_zkLend() function.
     testing::set_contract_address(
         tickets_handler_addrs
     ); //? Note for self: "set_caller_address" doesn't work.
 
     state._deposit_to_zkLend(underlying_erc20_addrs, TEN_WITH_6_DECIMALS);
 
-    // D: Verify that zkLend market mock now has 10 "COIN" and 0 "zCOIN" after the deposit.
+    // C: Verify that zkLend market mock now has 10 "COIN"
     let zklend_underlying_asset_balance_after = underlying_erc20_dispatcher
         .balance_of(zkLend_market_addrs);
     assert_eq!(zklend_underlying_asset_balance_after, TEN_WITH_6_DECIMALS);
 
-    let zklend_mkt_pod_token_balance_after = pod_token_dispatcher.balance_of(zkLend_market_addrs);
-    assert_eq!(
-        zklend_mkt_pod_token_balance_after,
-        zklend_mkt_pod_token_balance_before - TEN_WITH_6_DECIMALS
-    );
-
-    // E: Verify that the tickets handler indeed has 10 "zCOIN" and 0 "COIN" after the deposit.
+    // D: Verify that the tickets handler has indeed 10 "zCOIN" and 0 "COIN" after the deposit.
     let tickets_handler_underlying_asset_balance_after = underlying_erc20_dispatcher
         .balance_of(tickets_handler_addrs);
     assert_eq!(

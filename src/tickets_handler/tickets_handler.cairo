@@ -19,7 +19,6 @@ trait IzkLendMarket<TState> {
     // ! TO BE DELETED
     fn withdraw_in_progress(ref self: TState, token: ContractAddress, amount: felt252);
     fn get_proof_of_deposit_token(self: @TState) -> ContractAddress;
-
 }
 
 
@@ -44,8 +43,7 @@ mod TicketsHandlerContract {
     use core::option::OptionTrait;
     use core::traits::{Into, TryInto};
     // use cairo_loto_poc::testing_utils::mocks::ztoken_mock::{IzTOKENMock, IzTOKENMockDispatcher, IzTOKENMockDispatcherTrait};
-    // use cairo_loto_poc::testing_utils::mocks::zklend_market_mock::{IzkLendMarketMock, IzkLendMarketMockDispatcher, IzkLendMarketMockDispatcherTrait};
-    
+    // use cairo_loto_poc::testing_utils::mocks::zklend_market_mock::{IzkLendMarket, IzkLendMarketDispatcher, IzkLendMarketDispatcherTrait};
 
     // const MAINNET_ZKLEND_MARKET_ADRS: felt252 =
     //     0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05;
@@ -171,25 +169,20 @@ mod TicketsHandlerContract {
         fn burn(ref self: ContractState, token_id: u256, recipient: ContractAddress) {
             let underlying_erc20 = self.ticket.underlying_asset.read();
             let ticket_value = self.ticket.value.read();
-            let felt_value: felt252 = ticket_value.try_into().unwrap(); 
+            let felt_value: felt252 = ticket_value.try_into().unwrap();
             let zkLend_market = self.zkLend_mkt_addrs.read();
 
-            //! ----------------------------------------------------------------
-            // TODO: MAKE THIS TEST PASS
-            //? IS IT MANDATORY TO CREATE A PRIVATE FUNCTION FOR THIS? (IF SO, WHY EXACTLY?)
-            
-            // // underlying asset withdrawal from zkLend's vault
-            let zkLend_dispatcher = IzkLendMarketDispatcher {contract_address: zkLend_market};
-                zkLend_dispatcher.withdraw_in_progress(underlying_erc20, felt_value);
-            //! ----------------------------------------------------------------
+            // underlying asset withdrawal from zkLend's vault
+            //! IS IT MANDATORY TO CREATE A PRIVATE FUNCTION FOR THIS? (IF SO, WHY EXACTLY?)
+            let zkLend_dispatcher = IzkLendMarketDispatcher { contract_address: zkLend_market };
+            zkLend_dispatcher.withdraw(underlying_erc20, felt_value);
 
             // Destroy given ticket
-            // self._burn(token_id);
+            self._burn(token_id);
 
-            // // Send deposit back to the `recipient` (not hardcoded as `caller` for more flexibility)
-            // IERC20Dispatcher { contract_address: underlying_erc20 }.transfer(recipient, ticket_value);
-
-        // TODO: Update tests of this public function
+            // Send deposit back to the `recipient` (not hardcoded as `caller` for more flexibility)
+            IERC20Dispatcher { contract_address: underlying_erc20 }
+                .transfer(recipient, ticket_value);
         }
 
 
@@ -297,7 +290,6 @@ mod TicketsHandlerContract {
             let felt_amount: felt252 = amount.try_into().unwrap();
 
             zkLend_dispatcher.deposit(erc20_asset, felt_amount);
-
         ////////////////////////////////////////////////////////////////////
         //? Step 3: (optionnal - only to be used for "degen" vaults in later versions)
         // Enable ETH as collateral and create a leveraged position

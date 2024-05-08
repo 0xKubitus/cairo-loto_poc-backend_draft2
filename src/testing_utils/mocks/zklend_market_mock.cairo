@@ -7,9 +7,9 @@ trait IzkLendMarketMock<TState> {
 
     fn deposit(ref self: TState, token: ContractAddress, amount: felt252);
     fn withdraw(ref self: TState, token: ContractAddress, amount: felt252);
-    
+
     fn get_deposit_value_of(self: @TState, user: ContractAddress) -> u256;
-    
+
     //! TO BE DELETED
     fn withdraw_in_progress(self: @TState) -> ByteArray;
 }
@@ -73,8 +73,10 @@ mod zkLendMarketMock {
 
     
     //! NOTE FOR SELF => Note that my mock implementation of zklend market and
-    //! zTOKEN contracts requires the caller to approve zklend market to spend
-    //! their zTOKENs for withdrawal to work.
+    //! zTOKEN contracts requires the caller ( = tickets handler contract) 
+    //! to approve zklend market to spend their zTOKENs/proof-of-deposit
+    //! for withdrawal to work.
+    //! => I don't need to include approval neither in below function, nor in the frontend (but only in tests)
     //!
     //! However, that seems not to be required with the real zkLend Market
     //! contract deployed on mainnet.
@@ -101,21 +103,18 @@ mod zkLendMarketMock {
         let zkLend_market = get_contract_address();
         let underlying_erc20_dispatcher = IERC20Dispatcher { contract_address: token };
 
-        assert(underlying_erc20_dispatcher.balance_of(zkLend_market) == u256_amount, 'check zklend erc20 balance'); // not mandatory
-        
+        assert(
+            underlying_erc20_dispatcher.balance_of(zkLend_market) == u256_amount,
+            'check zklend erc20 balance'
+        ); // not mandatory
+
         let zTOKEN_addrs = self.proof_of_deposit_token_addrs.read();
-        let zTOKEN_dispatcher = IERC20Dispatcher {
-            contract_address: zTOKEN_addrs
-        };
+        let zTOKEN_dispatcher = IzTOKENMockDispatcher { contract_address: zTOKEN_addrs };
 
         let res_of_whatever = zTOKEN_dispatcher.whatever();
         assert(res_of_whatever == "whatever", 'here is the issue'); // not mandatory
-
-        // // Burn `amount` of `zkLend_proof_of_deposit` from the tickets_handler contract ( = caller)
-        // zTOKEN_dispatcher.burn(tickets_handler, u256_amount);
-
-
+    // // Burn `amount` of `zkLend_proof_of_deposit` from the tickets_handler contract ( = caller)
+    // zTOKEN_dispatcher.burn(tickets_handler, u256_amount);
 
     }
-
 }

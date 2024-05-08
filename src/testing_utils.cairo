@@ -15,6 +15,9 @@ use cairo_loto_poc::tickets_handler::interface::{
 use cairo_loto_poc::testing_utils::mocks::zklend_market_mock::{
     zkLendMarketMock, IzkLendMarketMockDispatcher, IzkLendMarketMockDispatcherTrait,
 };
+use cairo_loto_poc::testing_utils::mocks::ztoken_mock::{
+    zTOKENMock, IzTOKENMock, IzTOKENMockDispatcher, IzTOKENMockDispatcherTrait
+};
 use cairo_loto_poc::testing_utils::constants::{
     TOKEN_1, TOKEN_2, TOKEN_3, TOKENS_LEN, NONEXISTENT, TEN_WITH_6_DECIMALS, ETH_ADDRS,
     ZKLEND_MKT_ADDRS, SOME_ERC20, COIN,
@@ -179,6 +182,15 @@ fn full_setup_erc20_address(
     address
 }
 
+fn setup_zTOKEN_address() -> ContractAddress {
+    let mut calldata = array![];
+    calldata.append_serde(NAME());
+    calldata.append_serde(SYMBOL());
+
+    let address = utils::deploy(zTOKENMock::TEST_CLASS_HASH, calldata);
+    address
+}
+
 fn setup_erc20_dispatcher(token_address: ContractAddress) -> IERC20Dispatcher {
     let erc20_dispatcher = IERC20Dispatcher { contract_address: token_address };
 
@@ -188,6 +200,16 @@ fn setup_erc20_dispatcher(token_address: ContractAddress) -> IERC20Dispatcher {
     utils::drop_events(erc20_dispatcher.contract_address, TOKENS_LEN.try_into().unwrap() + 1);
 
     erc20_dispatcher
+}
+
+fn setup_zTOKEN_dispatcher(token_address: ContractAddress) -> IzTOKENMockDispatcher {
+    let dispatcher = IzTOKENMockDispatcher { contract_address: token_address };
+
+    //? Here I'm not even sure that there's a single event to be dropped because
+    //? deployment only initializes `name` and `symbol`
+    utils::drop_events(dispatcher.contract_address, TOKENS_LEN.try_into().unwrap() + 1);
+
+    dispatcher
 }
 
 fn ticket_dispatcher_with_event(erc20_addrs: ContractAddress) -> TicketsHandlerABIDispatcher {
@@ -266,15 +288,12 @@ fn setup_zkLend_market_mock_dispatcher(address: ContractAddress) -> IzkLendMarke
     dispatcher
 }
 
-<<<<<<< HEAD
-=======
 
->>>>>>> test-setup-rework
 // =============================================================================
 
 // NEW SETUP FOR INTEGRATION TESTS Tickets Handler v0.4
 
-<<<<<<< HEAD
+
 // #[derive(Drop)]
 // struct SetupData {
 //     zkLend_addrs: ContractAddress,
@@ -432,7 +451,7 @@ struct SetupData {
     zkLend_addrs: ContractAddress,
     zkLend_disp: IzkLendMarketMockDispatcher,
     zTOKEN_addrs: ContractAddress,
-    zTOKEN_disp: IERC20Dispatcher,
+    zTOKEN_disp: IzTOKENMockDispatcher,
     tickets_handler_addrs: ContractAddress,
     tickets_handler_disp: TicketsHandlerABIDispatcher,
     erc20_addrs: ContractAddress,
@@ -442,15 +461,13 @@ struct SetupData {
 fn setup_v04() -> SetupData {
     let zkLend_market_addrs = utils::deploy(zkLendMarketMock::TEST_CLASS_HASH, array![]);
 
-    let proof_of_deposit_token_addrs = full_setup_erc20_address(
-        "zkLend Market proof-of-deposit ERC20", "zCOIN", zkLend_market_addrs
-    );
-    let pod_token_dispatcher = setup_erc20_dispatcher(proof_of_deposit_token_addrs);
+    let zTOKEN_token_addrs = setup_zTOKEN_address();
+    let pod_token_dispatcher = setup_zTOKEN_dispatcher(zTOKEN_token_addrs);
 
     let zkLend_market_dispatcher = IzkLendMarketMockDispatcher {
         contract_address: zkLend_market_addrs
     };
-    zkLend_market_dispatcher.set_proof_of_deposit_token(proof_of_deposit_token_addrs);
+    zkLend_market_dispatcher.set_proof_of_deposit_token(zTOKEN_token_addrs);
 
     testing::set_contract_address(OWNER());
 
@@ -471,7 +488,7 @@ fn setup_v04() -> SetupData {
     let setup_data = SetupData {
         zkLend_addrs: zkLend_market_addrs,
         zkLend_disp: zkLend_market_dispatcher,
-        zTOKEN_addrs: proof_of_deposit_token_addrs,
+        zTOKEN_addrs: zTOKEN_token_addrs,
         zTOKEN_disp: pod_token_dispatcher,
         tickets_handler_addrs: tickets_handler_addrs,
         tickets_handler_disp: tickets_handler_dispatcher,
@@ -481,4 +498,4 @@ fn setup_v04() -> SetupData {
 
     setup_data
 }
->>>>>>> test-setup-rework
+
